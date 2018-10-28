@@ -57,9 +57,6 @@ fun Map<String, Any>?.map(key: String) = this?.get(key)?.let {
 
 fun Map<String, Any>?.string(key: String) = this?.get(key)?.toString()
 
-fun Map<String, Any>?.stringOrNull(key: String, unacceptable: String) =
-        this?.get(key)?.toString()?.let { if (it == unacceptable) null else it }
-
 fun <V> Map<String, V>.asCaseInsensitiveMap(): Map<String, V> {
     val indices = keys.withIndex().associate { (index, s) ->
         s.toLowerCase() to index
@@ -82,7 +79,5 @@ fun Map<String, Any>.explicit(key: String, default: String?): String? {
         else                     -> explicit
     }
 }
-
-private fun String?.isNullOrEmpty() = this == null || this.isEmpty()
 
 private fun <K, V> Map<K, V>?.toMutableMapOrNull() = if (this?.isEmpty() == false) toMutableMap() else null

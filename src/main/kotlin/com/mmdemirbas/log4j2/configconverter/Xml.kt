@@ -105,6 +105,57 @@ object Xml : ConfigFormat() {
 
 
     override fun write(config: Config, writer: Writer) {
-        TODO("not implemented")
+        config.configToXmlElement().write(writer)
+    }
+
+    private fun Config.configToXmlElement(): XmlElement {
+        return XmlElement("Configuration",
+                          attributes = mapOfNonEmpty("advertiser" to advertiser,
+                                                     "dest" to dest,
+                                                     "monitorInterval" to monitorIntervalSeconds?.toString(),
+                                                     "status" to status?.name,
+                                                     "strict" to strict?.toString(),
+                                                     "name" to name,
+                                                     "packages" to packages?.joinToString(),
+                                                     "schema" to schemaResource,
+                                                     "shutdownHook" to isShutdownHookEnabled?.toString(),
+                                                     "shutdownTimeout" to shutdownTimeoutMillis?.toString(),
+                                                     "verbose" to verbose),
+                          elements = listOf(XmlElement("Properties", elements = properties?.map { property ->
+                              XmlElement("Property",
+                                         attributes = mapOfNonEmpty("name" to property.name),
+                                         value = property.value)
+                          }),
+                                            XmlElement("Scripts"),
+                                            XmlElement("CustomLevels"),
+                                            XmlElement("Filter"),
+                                            XmlElement("Appenders"),
+                                            XmlElement("Loggers")))
+    }
+
+    data class XmlElement(val name: String,
+                          val attributes: Map<String, String>? = null,
+                          val value: String? = null,
+                          val elements: List<XmlElement>? = null) {
+        fun write(writer: Writer, level: Int = 0) {
+            writer.apply {
+                if (level == 0) writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+
+                val padding = "    ".repeat(level)
+                write("$padding<$name")
+                attributes?.forEach { key, value -> write(" $key=\"$value\"") }
+
+                when {
+                    !elements.orEmpty().isEmpty() -> {
+                        write(">\n")
+                        if (!value.isNullOrEmpty()) write("$padding$value")
+                        elements?.forEach { element -> element.write(writer, level + 1) }
+                        write("$padding</$name>\n")
+                    }
+                    value.isNullOrEmpty()         -> write("/>\n")
+                    else                          -> write(">$value</$name>\n")
+                }
+            }
+        }
     }
 }
