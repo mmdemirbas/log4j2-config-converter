@@ -42,7 +42,10 @@ data class Config(var advertiser: String? = null,
                   var loggers: Loggers? = null,
                   var extra: MutableMap<String, Any?>? = null) {
 
-    fun toString(format: Format) = StringWriter().use { format.write(this, it) }.toString()
+    fun toString(format: Format) = StringWriter().use {
+        format.write(this, it)
+        it.toString()
+    }
 }
 
 enum class Level { all, trace, debug, info, warn, error, fatal, off }

@@ -21,59 +21,40 @@ object Properties : Format() {
                       shutdownTimeoutMillis = config["shutdownTimeout"]?.toString()?.toLong(),
                       verbose = config["verbose"]?.toString(),
                       properties = (config["property"] as? Map<String, String>)?.mapMutable { (key, value) ->
-                                                                Property(name = key,
-                                                                                                               value = value)
-                                                            },
+                          Property(name = key, value = value)
+                      },
                       scripts = null, // map["scripts"]?.toString(),
                       customLevels = null, // map["customLevels"]?.toString(),
                       filter = config.filters(),
                       appenders = (config["appender"] as? Map<String, Map<String, Any>>)?.mapMutable { (alias, appender) ->
-                                                                Appender(alias = alias,
-                                                                                                               type = appender["type"]?.toString(),
-                                                                                                               name = appender["name"]?.toString(),
-                                                                                                               Layout = (appender["layout"] as? Map<String, Any>)?.let { layoutMap ->
-                                                                                                                   Layout(
-                                                                                                                           type = layoutMap["type"]?.toString(),
-                                                                                                                           extra = layoutMap without "type")
-                                                                                                               },
-                                                                                                               filters = appender.filters(),
-                                                                                                               extra = appender.without(
-                                                                                                                       "type",
-                                                                                                                       "name",
-                                                                                                                       "layout",
-                                                                                                                       "filter"))
-                                                            },
-                      loggers = Loggers(
-                                                                    Logger = (config["logger"] as? Map<String, Map<String, Any>>)?.mapMutable { (alias, logger) ->
-                                                                        Logger(
-                                                                                alias = alias,
-                                                                                name = logger["name"]?.toString(),
-                                                                                level = logger["level"]?.toString()?.asEnum<Level>(),
-                                                                                additivity = logger["additivity"]?.toString()?.toBoolean(),
-                                                                                filter = logger.filters(),
-                                                                                AppenderRef = logger.appenderRefs(),
-                                                                                extra = logger.without("name",
-                                                                                                       "level",
-                                                                                                       "additivity",
-                                                                                                       "filter",
-                                                                                                       "appenderRef"))
-                                                                    },
-                                                                    Root = (config["rootLogger"] as? Map<String, Any>)?.let { rootLogger ->
-                                                                        RootLogger(
-                                                                                level = rootLogger["level"]?.toString()?.asEnum<Level>(),
-                                                                                filter = rootLogger.filters(),
-                                                                                appenderRef = rootLogger.appenderRefs(),
-                                                                                extra = rootLogger.without("level",
-                                                                                                           "filter",
-                                                                                                           "appenderRef"))
-                                                                    }))
+                          Appender(alias = alias,
+                                   type = appender["type"]?.toString(),
+                                   name = appender["name"]?.toString(),
+                                   Layout = (appender["layout"] as? Map<String, Any>)?.let { layoutMap ->
+                                       Layout(type = layoutMap["type"]?.toString(), extra = layoutMap without "type")
+                                   },
+                                   filters = appender.filters(),
+                                   extra = appender.without("type", "name", "layout", "filter"))
+                      },
+                      loggers = Loggers(Logger = (config["logger"] as? Map<String, Map<String, Any>>)?.mapMutable { (alias, logger) ->
+                          Logger(alias = alias,
+                                 name = logger["name"]?.toString(),
+                                 level = logger["level"]?.toString()?.asEnum<Level>(),
+                                 additivity = logger["additivity"]?.toString()?.toBoolean(),
+                                 filter = logger.filters(),
+                                 AppenderRef = logger.appenderRefs(),
+                                 extra = logger.without("name", "level", "additivity", "filter", "appenderRef"))
+                      }, Root = (config["rootLogger"] as? Map<String, Any>)?.let { rootLogger ->
+                          RootLogger(level = rootLogger["level"]?.toString()?.asEnum<Level>(),
+                                     filter = rootLogger.filters(),
+                                     appenderRef = rootLogger.appenderRefs(),
+                                     extra = rootLogger.without("level", "filter", "appenderRef"))
+                      }))
     }
 
     private fun Map<String, Any>.appenderRefs() =
             (this["appenderRef"] as? Map<String, Map<String, Any>>)?.mapMutable { (alias, appenderRef) ->
-                AppenderRef(alias = alias,
-                                                                  ref = appenderRef["ref"]?.toString(),
-                                                                  filter = appenderRef.filters())
+                AppenderRef(alias = alias, ref = appenderRef["ref"]?.toString(), filter = appenderRef.filters())
             }
 
     private fun Map<String, Any>.filters() =
@@ -88,35 +69,35 @@ object Properties : Format() {
     override fun write(config: Config, writer: Writer) = writer.writeHierarchicalMap(map = config.toMap())
 
     fun Config.toMap() = mapOf("advertiser" to advertiser,
-                                                                     "dest" to dest,
-                                                                     "monitorInterval" to monitorIntervalSeconds,
-                                                                     "name" to name,
-                                                                     "packages" to packages?.joinToString(),
-                                                                     "schema" to schemaResource,
-                                                                     "shutdownHook" to isShutdownHookEnabled,
-                                                                     "status" to status,
-                                                                     "strict" to strict,
-                                                                     "shutdownTimeout" to shutdownTimeoutMillis,
-                                                                     "verbose" to verbose,
-                                                                     "appenders" to appenders?.map { it.alias },
-                                                                     "loggers" to loggers?.Logger?.map { it.alias },
-                                                                     "property" to properties.orEmpty().associate { it.name to it.value },
-                                                                     "script" to scripts,
-                                                                     "customLevel" to customLevels,
-                                                                     "filter" to filter.filters(),
-                                                                     "appender" to appenders?.associate {
+                               "dest" to dest,
+                               "monitorInterval" to monitorIntervalSeconds,
+                               "name" to name,
+                               "packages" to packages?.joinToString(),
+                               "schema" to schemaResource,
+                               "shutdownHook" to isShutdownHookEnabled,
+                               "status" to status,
+                               "strict" to strict,
+                               "shutdownTimeout" to shutdownTimeoutMillis,
+                               "verbose" to verbose,
+                               "appenders" to appenders?.map { it.alias },
+                               "loggers" to loggers?.Logger?.map { it.alias },
+                               "property" to properties.orEmpty().associate { it.name to it.value },
+                               "script" to scripts,
+                               "customLevel" to customLevels,
+                               "filter" to filter.filters(),
+                               "appender" to appenders?.associate {
                                    it.alias to mapOf("type" to it.type, "name" to it.name, "layout" to it.Layout?.let {
                                        mapOf("type" to it.type) + it.extra.orEmpty()
                                    }, "filter" to it.filters.filters()) + it.extra.orEmpty()
                                },
-                                                                     "logger" to loggers?.Logger?.associate {
+                               "logger" to loggers?.Logger?.associate {
                                    it.alias to mapOf("name" to it.name,
                                                      "level" to it.level,
                                                      "additivity" to it.additivity,
                                                      "filter" to it.filter.filters(),
                                                      "appenderRef" to it.AppenderRef.appenderRefs()) + it.extra.orEmpty()
                                },
-                                                                     "rootLogger" to loggers?.Root?.let {
+                               "rootLogger" to loggers?.Root?.let {
                                    mapOf("level" to it.level,
                                          "filter" to it.filter.filters(),
                                          "appenderRef" to it.appenderRef.appenderRefs()) + it.extra.orEmpty()

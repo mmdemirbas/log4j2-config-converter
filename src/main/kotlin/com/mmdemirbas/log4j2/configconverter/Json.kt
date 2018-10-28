@@ -8,8 +8,7 @@ import java.io.Writer
 
 object Json : Format() {
     private val mapper =
-            ObjectMapper()
-                .enable(SerializationFeature.INDENT_OUTPUT)
+            ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
                 .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
     override fun read(reader: Reader) = readWithMapper(reader, mapper)
