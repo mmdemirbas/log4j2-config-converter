@@ -426,7 +426,7 @@ private fun Map<String, Any>.explicit(key: String, default: String?): String? {
 
 fun Map<String, Any>.toAppender(alias: String?): Appender {
     val type = effectiveType(alias!!, "Appender")
-    return Appender(alias = if (alias == type) null else alias,
+    return Appender(alias = if (alias.equals(type, ignoreCase = true) || alias.equals("appender", ignoreCase = true)) null else alias,
                     type = type,
                     name = string("name"),
                     Layout = toLayout(),
@@ -494,7 +494,7 @@ private fun Map<String, Any>?.toFilters(): MutableList<Filter>? {
 
 fun Map<String, Any>.toFilter(alias: String): Filter {
     val type = effectiveType(alias, "Filter")
-    return Filter(alias = if (alias == type) null else alias,
+    return Filter(alias = if (alias.equals(type, ignoreCase = true) || alias.equals("filter", ignoreCase = true)) null else alias,
                   type = type,
                   onMismatch = enum<FilterDecision>("onMismatch"),
                   onMatch = enum<FilterDecision>("onMatch"),
@@ -827,4 +827,3 @@ object Properties : Format() {
                           "onMatch" to it.onMatch) + it.extra.orEmpty()
     }
 }
-

@@ -14,8 +14,11 @@ abstract class BaseTest(val format: Format, val resourceNameToExpectedConfig: Pa
     fun read() = assertEquals(resourceNameToExpectedConfig.second, format.read(resourceNameToExpectedConfig.first))
 
     @Test
-    fun write() = format.testWrite(resourceNameToExpectedConfig.first)
+    fun write() = format.assertReadIsReversible(resourceNameToExpectedConfig.first)
 }
+
+fun Format.assertReadIsReversible(resourceName: String) =
+        assertEquals(Format::class.java.getResource(resourceName).readText(), read(resourceName).toString(this))
 
 object JsonTest : BaseTest(Json, sampleJson)
 object PropertiesTest : BaseTest(Properties, sampleProperties)
@@ -26,7 +29,7 @@ object SnakeYamlTest : BaseTest(SnakeYaml, sampleYaml)
 class ConversionTests {
     @Test
     fun `properties is reversible`() {
-        Properties.testWrite("/com/mmdemirbas/log4j2/configconverter/prod.properties")
+        Properties.assertReadIsReversible("/com/mmdemirbas/log4j2/configconverter/prod.properties")
     }
 
     @Test
@@ -40,19 +43,15 @@ class ConversionTests {
         val propConfigBack = log("propConfigBack") { Properties.read(StringReader(propString)) }
         assertEquals(propConfig, propConfigBack)
     }
-
-    private fun <T> log(title: String, fn: () -> T): T {
-        println("===[ $title ]=====================================================================================================================")
-        return fn().also {
-            println(it)
-            println()
-        }
-    }
 }
 
-
-fun Format.testWrite(resourceName: String) =
-        assertEquals(Format::class.java.getResource(resourceName).readText(), read(resourceName).toString(this))
+private fun <T> log(title: String, fn: () -> T): T {
+    println("===[ $title ]=====================================================================================================================")
+    return fn().also {
+        println(it)
+        println()
+    }
+}
 
 val sampleJson =
         Pair("/com/mmdemirbas/log4j2/configconverter/sample.json",
