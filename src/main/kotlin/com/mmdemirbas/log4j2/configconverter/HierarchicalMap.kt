@@ -43,16 +43,16 @@ fun Writer.writeHierarchicalMap(prefix: String = "", map: Map<String, *>?) {
             null         -> {
                 // skip
             }
-            is String    -> writeDirect(fullKey, value)
-            is Int       -> writeDirect(fullKey, value)
-            is Long      -> writeDirect(fullKey, value)
-            is Boolean   -> writeDirect(fullKey, value)
-            is Enum<*>   -> writeDirect(fullKey, value)
-            is List<*>   -> writeDirect(fullKey, value.joinToString())
+            is String    -> writePair(fullKey, value)
+            is Int       -> writePair(fullKey, value)
+            is Long      -> writePair(fullKey, value)
+            is Boolean   -> writePair(fullKey, value)
+            is Enum<*>   -> writePair(fullKey, value)
+            is List<*>   -> writePair(fullKey, value.joinToString())
             is Map<*, *> -> writeHierarchicalMap(fullKey, value as Map<String, *>)
             else         -> TODO("Key '$key' has a value of an unsupported type ${value.javaClass}")
         }
     }
 }
 
-fun Writer.writeDirect(fullKey: String, value: Any?) = write("$fullKey=$value\n")
+private fun Writer.writePair(fullKey: String, value: Any?) = write("$fullKey=$value\n")

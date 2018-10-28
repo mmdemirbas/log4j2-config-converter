@@ -3,7 +3,7 @@ package com.mmdemirbas.log4j2.configconverter
 import java.io.Reader
 import java.io.Writer
 
-object Properties : Format() {
+object Properties : ConfigFormat() {
     // todo: support comments and empty lines when loading
 
     override fun read(reader: Reader): Config {
@@ -31,7 +31,7 @@ object Properties : Format() {
                                    type = appender["type"]?.toString(),
                                    name = appender["name"]?.toString(),
                                    Layout = (appender["layout"] as? Map<String, Any>)?.let { layoutMap ->
-                                       Layout(type = layoutMap["type"]?.toString(), extra = layoutMap without "type")
+                                       Layout(type = layoutMap["type"]?.toString(), extra = layoutMap.without("type"))
                                    },
                                    filters = appender.filters(),
                                    extra = appender.without("type", "name", "layout", "filter"))
@@ -66,45 +66,53 @@ object Properties : Format() {
                        extra = props.without("type", "onMismatch", "onMatch"))
             }
 
-    override fun write(config: Config, writer: Writer) = writer.writeHierarchicalMap(map = config.toMap())
+    private inline fun <K, V, R> Map<out K, V>.mapMutable(transform: (Map.Entry<K, V>) -> R) =
+            map(transform).toMutableList()
 
-    private fun Config.toMap() = mapOf("advertiser" to advertiser,
-                                       "dest" to dest,
-                                       "monitorInterval" to monitorIntervalSeconds,
-                                       "name" to name,
-                                       "packages" to packages?.joinToString(),
-                                       "schema" to schemaResource,
-                                       "shutdownHook" to isShutdownHookEnabled,
-                                       "status" to status,
-                                       "strict" to strict,
-                                       "shutdownTimeout" to shutdownTimeoutMillis,
-                                       "verbose" to verbose,
-                                       "appenders" to appenders?.map { it.alias },
-                                       "loggers" to loggers?.Logger?.map { it.alias },
-                                       "property" to properties.orEmpty().associate { it.name to it.value },
-                                       "script" to scripts,
-                                       "customLevel" to customLevels,
-                                       "filter" to filter.filters(),
-                                       "appender" to appenders?.associate {
-                                           it.alias to mapOf("type" to it.type,
-                                                             "name" to it.name,
-                                                             "layout" to it.Layout?.let {
-                                                                 mapOf("type" to it.type) + it.extra.orEmpty()
-                                                             },
-                                                             "filter" to it.filters.filters()) + it.extra.orEmpty()
-                                       },
-                                       "logger" to loggers?.Logger?.associate {
-                                           it.alias to mapOf("name" to it.name,
-                                                             "level" to it.level,
-                                                             "additivity" to it.additivity,
-                                                             "filter" to it.filter.filters(),
-                                                             "appenderRef" to it.AppenderRef.appenderRefs()) + it.extra.orEmpty()
-                                       },
-                                       "rootLogger" to loggers?.Root?.let {
-                                           mapOf("level" to it.level,
-                                                 "filter" to it.filter.filters(),
-                                                 "appenderRef" to it.appenderRef.appenderRefs()) + it.extra.orEmpty()
-                                       })
+    private fun <K, V> Map<K, V>.without(vararg keys: K): MutableMap<K, V>? {
+        val map = (this - keys.asList()).toMutableMap()
+        return if (map.isEmpty()) null else map
+    }
+
+
+    override fun write(config: Config, writer: Writer) =
+            writer.writeHierarchicalMap(map = mapOf("advertiser" to config.advertiser,
+                                                    "dest" to config.dest,
+                                                    "monitorInterval" to config.monitorIntervalSeconds,
+                                                    "name" to config.name,
+                                                    "packages" to config.packages?.joinToString(),
+                                                    "schema" to config.schemaResource,
+                                                    "shutdownHook" to config.isShutdownHookEnabled,
+                                                    "status" to config.status,
+                                                    "strict" to config.strict,
+                                                    "shutdownTimeout" to config.shutdownTimeoutMillis,
+                                                    "verbose" to config.verbose,
+                                                    "appenders" to config.appenders?.map { it.alias },
+                                                    "loggers" to config.loggers?.Logger?.map { it.alias },
+                                                    "property" to config.properties.orEmpty().associate { it.name to it.value },
+                                                    "script" to config.scripts,
+                                                    "customLevel" to config.customLevels,
+                                                    "filter" to config.filter.filters(),
+                                                    "appender" to config.appenders?.associate {
+                                                        it.alias to mapOf("type" to it.type,
+                                                                          "name" to it.name,
+                                                                          "layout" to it.Layout?.let {
+                                                                              mapOf("type" to it.type) + it.extra.orEmpty()
+                                                                          },
+                                                                          "filter" to it.filters.filters()) + it.extra.orEmpty()
+                                                    },
+                                                    "logger" to config.loggers?.Logger?.associate {
+                                                        it.alias to mapOf("name" to it.name,
+                                                                          "level" to it.level,
+                                                                          "additivity" to it.additivity,
+                                                                          "filter" to it.filter.filters(),
+                                                                          "appenderRef" to it.AppenderRef.appenderRefs()) + it.extra.orEmpty()
+                                                    },
+                                                    "rootLogger" to config.loggers?.Root?.let {
+                                                        mapOf("level" to it.level,
+                                                              "filter" to it.filter.filters(),
+                                                              "appenderRef" to it.appenderRef.appenderRefs()) + it.extra.orEmpty()
+                                                    }))
 
     private fun Iterable<AppenderRef>?.appenderRefs() = this?.associate {
         it.alias to mapOf("ref" to it.ref, "filter" to it.filter.filters())
@@ -114,17 +122,5 @@ object Properties : Format() {
         it.alias to mapOf("type" to it.type,
                           "onMismatch" to it.onMismatch,
                           "onMatch" to it.onMatch) + it.extra.orEmpty()
-    }
-
-    private inline fun <K, V, R> Map<out K, V>.mapMutable(transform: (Map.Entry<K, V>) -> R) =
-            map(transform).toMutableList()
-
-    private infix fun <K, V> Map<K, V>.without(key: K) = without(listOf(key))
-
-    private fun <K, V> Map<K, V>.without(vararg keys: K) = without(keys.asList())
-
-    private infix fun <K, V> Map<K, V>.without(keys: List<K>): MutableMap<K, V>? {
-        val map = (this - keys).toMutableMap()
-        return if (map.isEmpty()) null else map
     }
 }

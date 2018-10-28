@@ -32,7 +32,6 @@ fun Map<String, Any>?.bool(key: String) = this?.get(key)?.let {
     }
 }
 
-
 inline fun <reified T : Enum<T>> Map<String, Any>?.enum(key: String) = string(key)?.asEnum<T>()
 
 inline fun <reified E : Enum<E>> String?.asEnum() = this?.let {
@@ -84,6 +83,6 @@ fun Map<String, Any>.explicit(key: String, default: String?): String? {
     }
 }
 
-fun String?.isNullOrEmpty() = this == null || this.isEmpty()
+private fun String?.isNullOrEmpty() = this == null || this.isEmpty()
 
 private fun <K, V> Map<K, V>?.toMutableMapOrNull() = if (this?.isEmpty() == false) toMutableMap() else null

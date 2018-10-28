@@ -39,21 +39,20 @@ fun Map<String, Any>.toConfig(): Config {
                   loggers = map.toLoggers())
 }
 
-fun Map<String, Any>.toProperties(): MutableList<Property>? {
+private fun Map<String, Any>.toProperties(): MutableList<Property>? {
     return list("Properties")?.flatMapMutable { x ->
         (x as Map<String, Any>).toProperty()
     }
 }
 
-fun Map<String, Any>.toProperty(): List<Property> {
+private fun Map<String, Any>.toProperty(): List<Property> {
     return asCaseInsensitiveMap().list("property")!!.map { propertyMap ->
         propertyMap as Map<String, Any>
         Property(name = propertyMap.string("name"), value = propertyMap.string("value"))
     }
 }
 
-@Suppress("USELESS_CAST")
-fun Map<String, Any>.toAppenders(): MutableList<Appender>? {
+private fun Map<String, Any>.toAppenders(): MutableList<Appender>? {
     val appenders = this["Appenders"]
     return when (appenders) {
         is List<*>   -> appenders.map {
@@ -97,7 +96,7 @@ fun Map<String, Any>.toAppenders(): MutableList<Appender>? {
     }
 }
 
-fun Map<String, Any>.toAppender(alias: String?): Appender {
+private fun Map<String, Any>.toAppender(alias: String?): Appender {
     val type = effectiveType(alias!!, "Appender")
     return Appender(alias = if (alias.equals(type, ignoreCase = true) || alias.equals("appender",
                                                                                       ignoreCase = true)) null else alias,
@@ -109,7 +108,7 @@ fun Map<String, Any>.toAppender(alias: String?): Appender {
                                     suffices = listOf("Layout", "Filter")))
 }
 
-fun Map<String, Any>.toLayout(): Layout? {
+private fun Map<String, Any>.toLayout(): Layout? {
     val layoutMap = map("Layout")?.let { mapOf("Layout" to it) } ?: keys.filter { it.endsWith("Layout") }.map { key ->
         mapOf(key to map(key))
     }.firstOrNull()
@@ -120,7 +119,7 @@ fun Map<String, Any>.toLayout(): Layout? {
     }
 }
 
-fun Map<String, Any>.toLoggers(): Loggers {
+private fun Map<String, Any>.toLoggers(): Loggers {
     val wrapper = this["Loggers"]
     val loggers = when (wrapper) {
         is Map<*, *> -> (wrapper as Map<String, Any>).asCaseInsensitiveMap().list("Logger")
@@ -142,7 +141,7 @@ fun Map<String, Any>.toLoggers(): Loggers {
     }, Root = root?.toRootLogger())
 }
 
-fun Map<String, Any>.toLogger(alias: String): Logger {
+private fun Map<String, Any>.toLogger(alias: String): Logger {
     return Logger(alias = effectiveType(explicit("alias", alias)!!, "Logger"),
                   name = string("name"),
                   level = enum<Level>("level"),
@@ -153,7 +152,7 @@ fun Map<String, Any>.toLogger(alias: String): Logger {
                                   suffices = listOf("Filter")))
 }
 
-fun Map<String, Any>.toRootLogger(): RootLogger {
+private fun Map<String, Any>.toRootLogger(): RootLogger {
     val root = map("Root") ?: this
     return RootLogger(level = root.enum<Level>("level"),
                       filter = root.toFilters(),
@@ -161,7 +160,7 @@ fun Map<String, Any>.toRootLogger(): RootLogger {
                       extra = root.without(fullMatches = listOf("level", "AppenderRef"), suffices = listOf("Filter")))
 }
 
-fun Map<String, Any>?.toAppenderRefs() = map("AppenderRef")?.let { appenderRef ->
+private fun Map<String, Any>?.toAppenderRefs() = map("AppenderRef")?.let { appenderRef ->
     mutableListOf(AppenderRef(alias = appenderRef.stringOrNull("alias", "appender"),
                               ref = appenderRef.string("ref"),
                               filter = appenderRef.toFilters()))
@@ -183,7 +182,7 @@ private fun Map<String, Any>?.toFilters(): MutableList<Filter>? {
     }.toMutableListOrNull()
 }
 
-fun Map<String, Any>.toFilter(alias: String): Filter {
+private fun Map<String, Any>.toFilter(alias: String): Filter {
     val type = effectiveType(alias, "Filter")
     return Filter(alias = if (alias.equals(type, ignoreCase = true) || alias.equals("filter",
                                                                                     ignoreCase = true)) null else alias,
@@ -193,7 +192,7 @@ fun Map<String, Any>.toFilter(alias: String): Filter {
                   extra = without(fullMatches = listOf("type", "alias", "onMismatch", "onMatch")))
 }
 
-fun Map<String, Any>?.effectiveType(suggested: String, unacceptable: String): String? {
+private fun Map<String, Any>?.effectiveType(suggested: String, unacceptable: String): String? {
     val type = string("type")
     return when {
         type?.isNotEmpty() == true                        -> type

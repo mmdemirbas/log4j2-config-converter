@@ -81,9 +81,11 @@ class HierarchicalMapTest {
         }
     }
 
-    private infix fun List<String>.gives(expected: Map<String?, Any>) = Assertions.assertEquals(expected, exec())
-    private infix fun List<String>.throws(expected: String) = expectException<RuntimeException>(expected) { exec() }
-    private fun List<String>.exec() = parseHierarchicalMap(this)
+    private infix fun List<String>.gives(expected: Map<String?, Any>) =
+            Assertions.assertEquals(expected, parseHierarchicalMap(this))
+
+    private infix fun List<String>.throws(expectedMessage: String) =
+            expectException<RuntimeException>(expectedMessage) { parseHierarchicalMap(this) }
 
     private inline fun <reified T : Throwable> expectException(expected: String, noinline executable: () -> Unit) =
             Assertions.assertEquals(expected, assertThrows<T>(executable).message)

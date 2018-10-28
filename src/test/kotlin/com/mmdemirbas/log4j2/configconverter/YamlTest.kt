@@ -3,6 +3,7 @@ package com.mmdemirbas.log4j2.configconverter
 import org.junit.jupiter.api.Test
 
 private val sampleResourceName = "/com/mmdemirbas/log4j2/configconverter/sample.yaml"
+
 private val sampleConfig =
         Config(status = Level.warn,
                name = "YAMLConfigTest",
@@ -38,9 +39,8 @@ object YamlTest {
     @Test
     fun read() = Yaml.assertReadResult(sampleResourceName, sampleConfig)
 
-
     @Test
-    fun write() = Yaml.assertWriteResult(sampleResourceName)
+    fun write() = Yaml.assertReadWriteGivesSameResult(sampleResourceName)
 }
 
 
@@ -48,8 +48,7 @@ object SnakeYamlTest {
     @Test
     fun read() = SnakeYaml.assertReadResult(sampleResourceName, sampleConfig)
 
-
     @Test
-    fun write() = SnakeYaml.assertWriteResult(sampleResourceName)
+    fun write() = SnakeYaml.assertReadWriteGivesSameResult(sampleResourceName)
 }
 

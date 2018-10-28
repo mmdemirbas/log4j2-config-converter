@@ -23,13 +23,18 @@ import com.fasterxml.jackson.databind.node.TextNode
 import java.io.Reader
 import java.io.Writer
 
-object Json : Format() {
+object Json : ConfigFormat() {
     private val mapper =
             ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
                 .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
-    override fun read(reader: Reader) = readWithMapper(reader, mapper)
-    override fun write(config: Config, writer: Writer) = config.writeWithMapper(writer, mapper)
+    override fun read(reader: Reader): Config {
+        return readWithMapper(reader, mapper)
+    }
+
+    override fun write(config: Config, writer: Writer) {
+        config.writeWithMapper(writer, mapper)
+    }
 
     fun readWithMapper(reader: Reader, objectMapper: ObjectMapper): Config {
         val foundRoot = objectMapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true).readTree(reader)
@@ -41,7 +46,7 @@ object Json : Format() {
         objectMapper.writeValue(writer, mapOf("Configuration" to this))
     }
 
-    fun JsonNode.jsonNodeToMap(): Any? {
+    private fun JsonNode.jsonNodeToMap(): Any? {
         return when (this) {
             is ArrayNode      -> elements().asSequence().map { it.jsonNodeToMap() }.toList()
             is ObjectNode     -> fields().asSequence().associate { (k, v) -> k to v.jsonNodeToMap() }

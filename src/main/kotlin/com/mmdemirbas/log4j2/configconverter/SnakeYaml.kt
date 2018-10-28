@@ -3,7 +3,7 @@ package com.mmdemirbas.log4j2.configconverter
 import java.io.Reader
 import java.io.Writer
 
-object SnakeYaml : Format() {
+object SnakeYaml : ConfigFormat() {
     // todo: unwrapIfSingle özelliğinin çalıştığından emin olmak için test yazılabilir. Benzer şekilde farklı feature'lar için testler yazılmalı
 
     // todo: unwrapIfSingle özelliği, generate edilen map'lerde kullanılmalı mı? Kullanılacaksa mümkün olan her yerde mi kullanılsa? Okuma kısmı nasıl olacak?
@@ -14,11 +14,13 @@ object SnakeYaml : Format() {
 
     // todo: parsing işlemi olabildiğince toleranslı yapılsın. Parse edilemeyen kısımla ilgili warning verilsin ama işlem iptal edilmesin.
 
-    override fun read(reader: Reader) =
-            (org.yaml.snakeyaml.Yaml().load(reader) as Map<String, Any>).map("Configuration")!!.toConfig()
+    override fun read(reader: Reader): Config {
+        return (org.yaml.snakeyaml.Yaml().load(reader) as Map<String, Any>).map("Configuration")!!.toConfig()
+    }
 
-    override fun write(config: Config, writer: Writer) =
-            writer.write(org.yaml.snakeyaml.Yaml().dumpAsMap(config.configToYamlMap()))
+    override fun write(config: Config, writer: Writer) {
+        writer.write(org.yaml.snakeyaml.Yaml().dumpAsMap(config.configToYamlMap()))
+    }
 
     private fun Config.configToYamlMap() = mapOfNonEmpty("Configuration" to mapOfNonEmpty("advertiser" to advertiser,
                                                                                           "dest" to dest,

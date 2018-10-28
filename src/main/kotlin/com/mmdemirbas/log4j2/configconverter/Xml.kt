@@ -21,7 +21,7 @@ import java.io.StringReader
 import java.io.Writer
 import javax.xml.parsers.DocumentBuilderFactory
 
-object Xml : Format() {
+object Xml : ConfigFormat() {
     private const val XINCLUDE_FIXUP_LANGUAGE = "http://apache.org/xml/features/xinclude/fixup-language"
     private const val XINCLUDE_FIXUP_BASE_URIS = "http://apache.org/xml/features/xinclude/fixup-base-uris"
 
@@ -30,10 +30,6 @@ object Xml : Format() {
         val root = parseXml(buffer)
         val map = root.domNodeToMap() as Map<String, Any>
         return map.toConfig()
-    }
-
-    override fun write(config: Config, writer: Writer) {
-        TODO("not implemented")
     }
 
     private fun parseXml(xmlString: String) = try {
@@ -64,7 +60,6 @@ object Xml : Format() {
             setFeature(XINCLUDE_FIXUP_LANGUAGE, true)
         }
     }.newDocumentBuilder().parse(InputSource(StringReader(xmlString))).documentElement!!
-
 
     private fun org.w3c.dom.Node.domNodeToMap(): Any? {
         return when (this) {
@@ -107,4 +102,9 @@ object Xml : Format() {
 
     private fun NamedNodeMap.toList() = (0 until length).map(this::item)
     private fun NodeList.toList() = (0 until length).map(this::item)
+
+
+    override fun write(config: Config, writer: Writer) {
+        TODO("not implemented")
+    }
 }

@@ -7,7 +7,7 @@ import java.io.StringReader
 class ConversionTest {
     @Test
     fun `properties is reversible`() {
-        Properties.assertWriteResult("/com/mmdemirbas/log4j2/configconverter/prod.properties")
+        Properties.assertReadWriteGivesSameResult("/com/mmdemirbas/log4j2/configconverter/prod.properties")
     }
 
     @Test
@@ -28,7 +28,7 @@ class ConversionTest {
         Assertions.assertEquals(propConfig, propConfigBack)
     }
 
-    fun <T> log(title: String, fn: () -> T): T {
+    private fun <T> log(title: String, fn: () -> T): T {
         println("===[ $title ]=====================================================================================================================")
         return fn().also {
             println(it)

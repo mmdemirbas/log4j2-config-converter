@@ -42,7 +42,7 @@ data class Config(var advertiser: String? = null,
                   var loggers: Loggers? = null,
                   var extra: MutableMap<String, Any?>? = null) {
 
-    fun toString(format: Format) = StringWriter().use {
+    fun toString(format: ConfigFormat) = StringWriter().use {
         format.write(this, it)
         it.toString()
     }
