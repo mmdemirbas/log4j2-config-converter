@@ -54,7 +54,9 @@ object Properties : ConfigFormat() {
 
     private fun Map<String, Any>.appenderRefs() =
             (this["appenderRef"] as? Map<String, Map<String, Any>>)?.mapMutable { (alias, appenderRef) ->
-                AppenderRef(alias = alias, ref = appenderRef["ref"]?.toString(), filter = appenderRef.filters())
+                AppenderRef(alias = alias,
+                            ref = appenderRef["ref"]?.toString(),
+                            filter = appenderRef.filters())
             }
 
     private fun Map<String, Any>.filters() =

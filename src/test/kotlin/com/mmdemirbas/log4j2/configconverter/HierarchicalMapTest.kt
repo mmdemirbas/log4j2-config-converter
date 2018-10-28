@@ -1,6 +1,6 @@
 package com.mmdemirbas.log4j2.configconverter
 
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -82,11 +82,11 @@ class HierarchicalMapTest {
     }
 
     private infix fun List<String>.gives(expected: Map<String?, Any>) =
-            Assertions.assertEquals(expected, parseHierarchicalMap(this))
+            assertEquals(expected, parseHierarchicalMap(this))
 
     private infix fun List<String>.throws(expectedMessage: String) =
             expectException<RuntimeException>(expectedMessage) { parseHierarchicalMap(this) }
 
     private inline fun <reified T : Throwable> expectException(expected: String, noinline executable: () -> Unit) =
-            Assertions.assertEquals(expected, assertThrows<T>(executable).message)
+            assertEquals(expected, assertThrows<T>(executable).message)
 }

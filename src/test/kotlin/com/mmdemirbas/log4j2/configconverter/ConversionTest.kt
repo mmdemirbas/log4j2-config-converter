@@ -1,6 +1,6 @@
 package com.mmdemirbas.log4j2.configconverter
 
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.io.StringReader
 
@@ -16,16 +16,12 @@ class ConversionTest {
             Properties.readResource("/com/mmdemirbas/log4j2/configconverter/prod.properties")
         }
         val yamlString = log("yamlString") { propConfig.toString(SnakeYaml) }
-        val yamlConfig = log("yamlConfig") {
-            SnakeYaml.read(StringReader(yamlString))
-        }
-        Assertions.assertEquals(propConfig, yamlConfig)
+        val yamlConfig = log("yamlConfig") { SnakeYaml.read(StringReader(yamlString)) }
+        assertEquals(propConfig, yamlConfig)
 
         val propString = log("propString") { yamlConfig.toString(Properties) }
-        val propConfigBack = log("propConfigBack") {
-            Properties.read(StringReader(propString))
-        }
-        Assertions.assertEquals(propConfig, propConfigBack)
+        val propConfigBack = log("propConfigBack") { Properties.read(StringReader(propString)) }
+        assertEquals(propConfig, propConfigBack)
     }
 
     private fun <T> log(title: String, fn: () -> T): T {

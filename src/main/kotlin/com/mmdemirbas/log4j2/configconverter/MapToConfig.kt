@@ -161,7 +161,7 @@ private fun Map<String, Any>.toRootLogger(): RootLogger {
 }
 
 private fun Map<String, Any>?.toAppenderRefs() = map("AppenderRef")?.let { appenderRef ->
-    mutableListOf(AppenderRef(alias = appenderRef.stringOrNull("alias", "appender"),
+    mutableListOf(AppenderRef(alias = appenderRef.string("alias"),
                               ref = appenderRef.string("ref"),
                               filter = appenderRef.toFilters()))
 }
@@ -176,17 +176,18 @@ private fun Map<String, Any>?.toFilters(): MutableList<Filter>? {
         val (alias, props) = (item as Map<String, Any>).entries.first()
         when (props) {
             is List<*>   -> TODO()
-            is Map<*, *> -> (props as Map<String, Any>).toFilter(props.explicit("alias", alias)!!)
+            is Map<*, *> -> (props as Map<String, Any>).toFilter(alias)
             else         -> TODO("type: ${props.javaClass.name}  toString: $props")
         }
     }.toMutableListOrNull()
 }
 
 private fun Map<String, Any>.toFilter(alias: String): Filter {
-    val type = effectiveType(alias, "Filter")
-    return Filter(alias = if (alias.equals(type, ignoreCase = true) || alias.equals("filter",
-                                                                                    ignoreCase = true)) null else alias,
-                  type = type,
+    val effectiveAlias = explicit("alias", alias)
+    val effectiveType = explicit("type", alias)
+    return Filter(alias = if (effectiveAlias.equals(effectiveType, ignoreCase = true) || effectiveAlias.equals("filter",
+                                                                                                               ignoreCase = true)) null else effectiveAlias,
+                  type = effectiveType,
                   onMismatch = enum<FilterDecision>("onMismatch"),
                   onMatch = enum<FilterDecision>("onMatch"),
                   extra = without(fullMatches = listOf("type", "alias", "onMismatch", "onMatch")))
@@ -206,4 +207,3 @@ private fun List<Filter>?.toMutableListOrNull() = if (this?.isEmpty() == false) 
 private inline fun <T, R> Iterable<T>.flatMapMutable(transform: (T) -> Iterable<R>) = flatMap(transform).toMutableList()
 
 private inline fun <T, R> Iterable<T>.mapMutable(transform: (T) -> R) = map(transform).toMutableList()
-

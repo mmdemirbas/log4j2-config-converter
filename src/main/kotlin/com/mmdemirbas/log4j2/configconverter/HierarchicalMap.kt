@@ -35,7 +35,7 @@ fun parseHierarchicalMap(lines: List<String>): Map<String, Any> {
 }
 
 
-fun Writer.writeHierarchicalMap(prefix: String = "", map: Map<String, *>?) {
+fun Writer.writeHierarchicalMap(prefix: String = "", map: Map<String?, *>?) {
     val prefixAndDot = if (prefix.isEmpty()) "" else "$prefix."
     map?.forEach { key, value ->
         val fullKey = "$prefixAndDot$key"
@@ -49,7 +49,7 @@ fun Writer.writeHierarchicalMap(prefix: String = "", map: Map<String, *>?) {
             is Boolean   -> writePair(fullKey, value)
             is Enum<*>   -> writePair(fullKey, value)
             is List<*>   -> writePair(fullKey, value.joinToString())
-            is Map<*, *> -> writeHierarchicalMap(fullKey, value as Map<String, *>)
+            is Map<*, *> -> writeHierarchicalMap(fullKey, value as Map<String?, *>)
             else         -> TODO("Key '$key' has a value of an unsupported type ${value.javaClass}")
         }
     }
