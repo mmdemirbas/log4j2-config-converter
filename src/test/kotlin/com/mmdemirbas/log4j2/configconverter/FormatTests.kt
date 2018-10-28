@@ -11,14 +11,12 @@ import java.io.StringReader
 
 abstract class BaseTest(val format: Format, val resourceNameToExpectedConfig: Pair<String, Config>) {
     @Test
-    fun read() = assertEquals(resourceNameToExpectedConfig.second, format.read(resourceNameToExpectedConfig.first))
+    fun read() =
+            assertEquals(resourceNameToExpectedConfig.second, format.readResource(resourceNameToExpectedConfig.first))
 
     @Test
     fun write() = format.assertReadIsReversible(resourceNameToExpectedConfig.first)
 }
-
-fun Format.assertReadIsReversible(resourceName: String) =
-        assertEquals(Format::class.java.getResource(resourceName).readText(), read(resourceName).toString(this))
 
 object JsonTest : BaseTest(Json, sampleJson)
 object PropertiesTest : BaseTest(Properties, sampleProperties)
@@ -34,7 +32,8 @@ class ConversionTests {
 
     @Test
     fun `properties to yaml is reversible`() {
-        val propConfig = log("propConfig") { Properties.read("/com/mmdemirbas/log4j2/configconverter/prod.properties") }
+        val propConfig =
+                log("propConfig") { Properties.readResource("/com/mmdemirbas/log4j2/configconverter/prod.properties") }
         val yamlString = log("yamlString") { propConfig.toString(SnakeYaml) }
         val yamlConfig = log("yamlConfig") { SnakeYaml.read(StringReader(yamlString)) }
         assertEquals(propConfig, yamlConfig)
@@ -44,6 +43,12 @@ class ConversionTests {
         assertEquals(propConfig, propConfigBack)
     }
 }
+
+private fun Format.assertReadIsReversible(resourceName: String) =
+        assertEquals(Format::class.java.getResource(resourceName).readText(), readResource(resourceName).toString(this))
+
+private fun Format.readResource(resourceName: String) =
+        read(Format::class.java.getResourceAsStream(resourceName).bufferedReader())
 
 private fun <T> log(title: String, fn: () -> T): T {
     println("===[ $title ]=====================================================================================================================")

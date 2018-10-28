@@ -40,69 +40,18 @@ import org.w3c.dom.Text
 import org.xml.sax.InputSource
 import java.io.Reader
 import java.io.StringReader
-import java.io.StringWriter
 import java.io.Writer
 import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
-import kotlin.reflect.KMutableProperty
 
 
 abstract class Format {
-    fun read(resourceName: String) = read(Format::class.java.getResourceAsStream(resourceName).bufferedReader())
-
-    fun write(config: Config) = StringWriter().apply { use { write(config, it) } }.toString()
-
     abstract fun read(reader: Reader): Config
     abstract fun write(config: Config, writer: Writer)
 }
 
 // todo: declared type immutable iken default value'lar mutable tanımlansa da bunun bir kullanım alanı var mı? Belki java tarafına geçince anlamlı oluyordur.
-/**
- *
- * @property advertiser (Optional) The Advertiser plugin name which will be used to advertise individual FileAppender or SocketAppender configurations. The only Advertiser plugin provided is 'multicastdns".
- * @property dest  Either "err", which will send output to stderr, or a file path or URL.
- * @property monitorIntervalSeconds The minimum amount of time, in seconds, that must elapse before the file configuration is checked for changes.
- * @property name The name of the configuration.
- * @property packages A comma separated list of package names to search for plugins. Plugins are only loaded once per classloader so changing this value may not have any effect upon reconfiguration.
- * @property schemaResource Identifies the location for the classloader to located the XML Schema to use to validate the configuration. Only valid when strict is set to true. If not set no schema validation will take place.
- * @property isShutdownHookEnabled Specifies whether or not Log4j should automatically shutdown when the JVM shuts down. The shutdown hook is enabled by default but may be disabled by setting this attribute to "disable"
- * @property shutdownTimeoutMillis Specifies how many milliseconds appenders and background tasks will get to shutdown when the JVM shuts down. Default is zero which mean that each appender uses its default timeout, and don't wait for background tasks. Not all appenders will honor this, it is a hint and not an absolute guarantee that the shutdown procedure will not take longer. Setting this too low increase the risk of losing outstanding log events not yet written to the final destination. See LoggerContext.stop(long, java.util.concurrent.TimeUnit). (Not used if shutdownHook is set to "disable".)
- * @property status The level of internal Log4j events that should be logged to the console. Valid values for this attribute are "trace", "debug", "info", "warn", "error" and "fatal". Log4j will log details about initialization, rollover and other internal actions to the status logger. Setting status="trace" is one of the first tools available to you if you need to troubleshoot log4j. (Alternatively, setting system property log4j2.debug will also print internal Log4j2 logging to the console, including internal logging that took place before the configuration file was found.)
- * @property strict Enables the use of the strict XML format. Not supported in JSON configurations.
- * @property verbose Enables diagnostic information while loading plugins.
- * @property properties
- * @property scripts
- * @property customLevels
- * @property filter
- * @property appenders
- * @property loggers
- * @property extra
- */
-data class Config(var advertiser: String? = null,
-                  var dest: String? = null,
-                  var monitorIntervalSeconds: Int? = null,
-                  var name: String? = null,
-                  var packages: MutableList<String?>? = null,
-                  var schemaResource: String? = null,
-                  var isShutdownHookEnabled: Boolean? = null,
-                  var status: Level? = null,
-                  var strict: Boolean? = null,
-                  var shutdownTimeoutMillis: Long? = null,
-                  var verbose: String? = null,
-                  var properties: MutableList<Property>? = null,
-                  var scripts: MutableList<Script>? = null,
-                  var customLevels: MutableList<CustomLevel>? = null,
-                  var filter: MutableList<Filter>? = null,
-                  var appenders: MutableList<Appender>? = null,
-                  var loggers: Loggers? = null,
-                  var extra: MutableMap<String, Any?>? = null) {
-    fun toString(format: Format) = format.write(this)
-}
 
-
-enum class Level { all, trace, debug, info, warn, error, fatal, off }
-
-data class Property(var name: String? = null, var value: String? = null)
 
 // todo: out-of-the-box layout'lar karşılık gelen sınıflar tek tek yazılarak support edilebilir => buna gerek kalmayabilir extra map sayesinde
 
@@ -110,99 +59,6 @@ data class Property(var name: String? = null, var value: String? = null)
 // belki extra'larda da top-level item'lar type içerebilir diye düşünülse iyi olabilir
 
 // todo: copy other samples from log4j website & repos for testing
-
-data class Script(var type: String? = null,
-                  var name: String? = null,
-                  var language: String? = null,
-                  var text: String? = null,
-                  var path: String? = null)
-
-data class CustomLevel(var name: String? = null, var value: Int? = null)
-
-enum class FilterDecision { ACCEPT, NEUTRAL, DENY }
-
-data class Filter(var alias: String? = null,
-                  var type: String? = null,
-                  var onMismatch: FilterDecision? = null,
-                  var onMatch: FilterDecision? = null,
-                  var extra: MutableMap<String, Any?>? = null)
-
-
-data class Appender(var alias: String? = null,
-                    var type: String? = null,
-                    var name: String? = null,
-                    var Layout: Layout? = null,
-                    var filters: MutableList<Filter>? = null,
-                    var extra: MutableMap<String, Any?>? = null)
-
-
-data class Layout(var type: String? = null, var extra: MutableMap<String, Any?>? = null)
-
-data class Loggers(var Logger: MutableList<Logger>? = null, var Root: RootLogger? = null)
-
-data class Logger(var alias: String? = null,
-                  var name: String? = null,
-                  var level: Level? = null,
-                  var additivity: Boolean? = null,
-                  var filter: MutableList<Filter>? = null,
-                  var AppenderRef: MutableList<AppenderRef>? = null,
-                  var extra: MutableMap<String, Any?>? = null)
-
-
-data class RootLogger(var level: Level? = null,
-                      var filter: MutableList<Filter>? = null,
-                      var appenderRef: MutableList<AppenderRef>? = null,
-                      var extra: MutableMap<String, Any?>? = null)
-
-data class AppenderRef(var alias: String? = null, var ref: String? = null, var filter: MutableList<Filter>? = null)
-
-
-fun MutableMap<String, Any?>?.toDynamicObject(): DynamicObject? {
-    if (this == null) return null
-
-    val valueEntry = this["value"]
-    val hasValue = valueEntry is String
-    val value = if (hasValue) valueEntry.toString() else ""
-    val extras = if (hasValue) this - "value" else this
-
-    return DynamicObject(value = value, extra = extras.entries.associateMutable { (key, value) ->
-        key to when (value) {
-            is MutableMap<*, *> -> mutableListOf((value as MutableMap<String, Any?>).toDynamicObject())
-            is String           -> mutableListOf(DynamicObject(value = value))
-            is List<*>          -> value.mapMutable { DynamicObject(value = it.toString()) }
-            else                -> TODO("Unsupported type: ${value?.javaClass?.name}: $value")
-        }
-    })
-}
-
-// todo: manual parsing işlemlerinden sonra DynamicObject gereksiz hale gelmiş olabilir. önce write support ekle, sonra deprecated'ları kaldır, sonra da DynamicObject'i
-
-data class DynamicObject @JvmOverloads constructor(val value: String = "",
-                                                   var extra: MutableMap<String, MutableList<out DynamicObject?>>? = null) {
-    override fun toString() = when {
-        value.isEmpty()          -> extra.toString()
-        extra?.isEmpty() == true -> value
-        else                     -> "$value $extra"
-    }
-
-    fun asFilterDecision(key: String) = singleValueOrNull(key)?.let { FilterDecision.valueOf(it) }
-    fun singleValueOrNull(key: String) = extra?.get(key)?.singleOrNull()?.value
-
-    operator fun set(name: String, value: DynamicObject) {
-        TODO()
-    }
-}
-
-
-fun lateinitDynamicObject(prop: KMutableProperty<DynamicObject?>) = lateinit(prop) { DynamicObject() }
-
-fun <K, V> lateinitMap(prop: KMutableProperty<MutableMap<K, V>?>) = lateinit(prop) { mutableMapOf() }
-
-fun <T> lateinitList(prop: KMutableProperty<MutableList<T>?>) = lateinit(prop) { mutableListOf() }
-fun <R> lateinit(prop: KMutableProperty<R?>, supply: () -> R): R {
-    if (prop.getter.call() == null) prop.setter.call(supply())
-    return prop.getter.call()!!
-}
 
 
 infix fun <K, V> Map<K, V>.without(key: K) = without(listOf(key))
@@ -426,7 +282,8 @@ private fun Map<String, Any>.explicit(key: String, default: String?): String? {
 
 fun Map<String, Any>.toAppender(alias: String?): Appender {
     val type = effectiveType(alias!!, "Appender")
-    return Appender(alias = if (alias.equals(type, ignoreCase = true) || alias.equals("appender", ignoreCase = true)) null else alias,
+    return Appender(alias = if (alias.equals(type, ignoreCase = true) || alias.equals("appender",
+                                                                                      ignoreCase = true)) null else alias,
                     type = type,
                     name = string("name"),
                     Layout = toLayout(),
@@ -494,7 +351,8 @@ private fun Map<String, Any>?.toFilters(): MutableList<Filter>? {
 
 fun Map<String, Any>.toFilter(alias: String): Filter {
     val type = effectiveType(alias, "Filter")
-    return Filter(alias = if (alias.equals(type, ignoreCase = true) || alias.equals("filter", ignoreCase = true)) null else alias,
+    return Filter(alias = if (alias.equals(type, ignoreCase = true) || alias.equals("filter",
+                                                                                    ignoreCase = true)) null else alias,
                   type = type,
                   onMismatch = enum<FilterDecision>("onMismatch"),
                   onMatch = enum<FilterDecision>("onMatch"),
