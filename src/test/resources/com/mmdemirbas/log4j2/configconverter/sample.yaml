@@ -1,6 +1,6 @@
 Configuration:
-  status: warn
   name: YAMLConfigTest
+  status: warn
   properties:
     property:
       name: filename
@@ -11,20 +11,18 @@ Configuration:
     Console:
       name: STDOUT
       PatternLayout:
-        Pattern: "%m%n"
+        Pattern: '%m%n'
     File:
       name: File
       fileName: ${filename}
       PatternLayout:
-        Pattern: "%d %p %C{1.} [%t] %m%n"
+        Pattern: '%d %p %C{1.} [%t] %m%n'
       Filters:
         ThresholdFilter:
           level: error
-
   Loggers:
     logger:
-    -
-      name: org.apache.logging.log4j.test1
+    - name: org.apache.logging.log4j.test1
       level: debug
       additivity: false
       ThreadContextMapFilter:
@@ -33,8 +31,7 @@ Configuration:
           value: 123
       AppenderRef:
         ref: STDOUT
-    -
-      name: org.apache.logging.log4j.test2
+    - name: org.apache.logging.log4j.test2
       level: debug
       additivity: false
       AppenderRef:
