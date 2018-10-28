@@ -68,40 +68,43 @@ object Properties : Format() {
 
     override fun write(config: Config, writer: Writer) = writer.writeHierarchicalMap(map = config.toMap())
 
-    fun Config.toMap() = mapOf("advertiser" to advertiser,
-                               "dest" to dest,
-                               "monitorInterval" to monitorIntervalSeconds,
-                               "name" to name,
-                               "packages" to packages?.joinToString(),
-                               "schema" to schemaResource,
-                               "shutdownHook" to isShutdownHookEnabled,
-                               "status" to status,
-                               "strict" to strict,
-                               "shutdownTimeout" to shutdownTimeoutMillis,
-                               "verbose" to verbose,
-                               "appenders" to appenders?.map { it.alias },
-                               "loggers" to loggers?.Logger?.map { it.alias },
-                               "property" to properties.orEmpty().associate { it.name to it.value },
-                               "script" to scripts,
-                               "customLevel" to customLevels,
-                               "filter" to filter.filters(),
-                               "appender" to appenders?.associate {
-                                   it.alias to mapOf("type" to it.type, "name" to it.name, "layout" to it.Layout?.let {
-                                       mapOf("type" to it.type) + it.extra.orEmpty()
-                                   }, "filter" to it.filters.filters()) + it.extra.orEmpty()
-                               },
-                               "logger" to loggers?.Logger?.associate {
-                                   it.alias to mapOf("name" to it.name,
-                                                     "level" to it.level,
-                                                     "additivity" to it.additivity,
-                                                     "filter" to it.filter.filters(),
-                                                     "appenderRef" to it.AppenderRef.appenderRefs()) + it.extra.orEmpty()
-                               },
-                               "rootLogger" to loggers?.Root?.let {
-                                   mapOf("level" to it.level,
-                                         "filter" to it.filter.filters(),
-                                         "appenderRef" to it.appenderRef.appenderRefs()) + it.extra.orEmpty()
-                               })
+    private fun Config.toMap() = mapOf("advertiser" to advertiser,
+                                       "dest" to dest,
+                                       "monitorInterval" to monitorIntervalSeconds,
+                                       "name" to name,
+                                       "packages" to packages?.joinToString(),
+                                       "schema" to schemaResource,
+                                       "shutdownHook" to isShutdownHookEnabled,
+                                       "status" to status,
+                                       "strict" to strict,
+                                       "shutdownTimeout" to shutdownTimeoutMillis,
+                                       "verbose" to verbose,
+                                       "appenders" to appenders?.map { it.alias },
+                                       "loggers" to loggers?.Logger?.map { it.alias },
+                                       "property" to properties.orEmpty().associate { it.name to it.value },
+                                       "script" to scripts,
+                                       "customLevel" to customLevels,
+                                       "filter" to filter.filters(),
+                                       "appender" to appenders?.associate {
+                                           it.alias to mapOf("type" to it.type,
+                                                             "name" to it.name,
+                                                             "layout" to it.Layout?.let {
+                                                                 mapOf("type" to it.type) + it.extra.orEmpty()
+                                                             },
+                                                             "filter" to it.filters.filters()) + it.extra.orEmpty()
+                                       },
+                                       "logger" to loggers?.Logger?.associate {
+                                           it.alias to mapOf("name" to it.name,
+                                                             "level" to it.level,
+                                                             "additivity" to it.additivity,
+                                                             "filter" to it.filter.filters(),
+                                                             "appenderRef" to it.AppenderRef.appenderRefs()) + it.extra.orEmpty()
+                                       },
+                                       "rootLogger" to loggers?.Root?.let {
+                                           mapOf("level" to it.level,
+                                                 "filter" to it.filter.filters(),
+                                                 "appenderRef" to it.appenderRef.appenderRefs()) + it.extra.orEmpty()
+                                       })
 
     private fun Iterable<AppenderRef>?.appenderRefs() = this?.associate {
         it.alias to mapOf("ref" to it.ref, "filter" to it.filter.filters())
@@ -111,5 +114,17 @@ object Properties : Format() {
         it.alias to mapOf("type" to it.type,
                           "onMismatch" to it.onMismatch,
                           "onMatch" to it.onMatch) + it.extra.orEmpty()
+    }
+
+    private inline fun <K, V, R> Map<out K, V>.mapMutable(transform: (Map.Entry<K, V>) -> R) =
+            map(transform).toMutableList()
+
+    private infix fun <K, V> Map<K, V>.without(key: K) = without(listOf(key))
+
+    private fun <K, V> Map<K, V>.without(vararg keys: K) = without(keys.asList())
+
+    private infix fun <K, V> Map<K, V>.without(keys: List<K>): MutableMap<K, V>? {
+        val map = (this - keys).toMutableMap()
+        return if (map.isEmpty()) null else map
     }
 }

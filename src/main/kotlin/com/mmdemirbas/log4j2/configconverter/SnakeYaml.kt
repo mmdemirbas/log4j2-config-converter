@@ -67,4 +67,6 @@ object SnakeYaml : Format() {
                                  "onMismatch" to it.onMismatch,
                                  "onMatch" to it.onMatch) + it.extra.orEmpty()
     }.orEmpty()
+
+    private fun <E> List<E>?.unwrapIfSingle() = if (this?.size == 1) this[0] else this
 }
