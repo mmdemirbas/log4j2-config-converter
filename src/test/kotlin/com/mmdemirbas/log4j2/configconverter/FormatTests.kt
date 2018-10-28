@@ -1,11 +1,6 @@
 package com.mmdemirbas.log4j2.configconverter
 
-import com.mmdemirbas.log4j2.configconverter.deprecated.DeprecatedJson
-import com.mmdemirbas.log4j2.configconverter.deprecated.DeprecatedProperties
-import com.mmdemirbas.log4j2.configconverter.deprecated.DeprecatedXml
-import com.mmdemirbas.log4j2.configconverter.deprecated.DeprecatedYaml
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.io.StringReader
 
@@ -21,18 +16,6 @@ abstract class BaseTest(val format: Format, val resourceNameToExpectedConfig: Pa
     @Test
     fun write() = format.testWrite(resourceNameToExpectedConfig.first)
 }
-
-@Disabled
-object DeprecatedJsonTest : BaseTest(DeprecatedJson, sampleJson)
-
-@Disabled
-object DeprecatedPropertiesTest : BaseTest(DeprecatedProperties, sampleProperties)
-
-@Disabled
-object DeprecatedXmlTest : BaseTest(DeprecatedXml, sampleXml)
-
-@Disabled
-object DeprecatedYamlTest : BaseTest(DeprecatedYaml, sampleYaml)
 
 object JsonTest : BaseTest(Json, sampleJson)
 object PropertiesTest : BaseTest(Properties, sampleProperties)
