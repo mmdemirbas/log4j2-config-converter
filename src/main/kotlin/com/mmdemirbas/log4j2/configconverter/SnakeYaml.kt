@@ -22,24 +22,23 @@ object SnakeYaml : ConfigFormat() {
         writer.write(org.yaml.snakeyaml.Yaml().dumpAsMap(config.configToYamlMap()))
     }
 
-    private fun Config.configToYamlMap() = mapOfNonEmpty("Configuration" to mapOfNonEmpty("advertiser" to advertiser,
-                                                                                          "dest" to dest,
-                                                                                          "monitorInterval" to monitorIntervalSeconds,
-                                                                                          "name" to name,
-                                                                                          "packages" to packages?.joinToString(),
-                                                                                          "schema" to schemaResource,
-                                                                                          "shutdownHook" to isShutdownHookEnabled,
-                                                                                          "status" to status?.name,
-                                                                                          "strict" to strict,
-                                                                                          "shutdownTimeout" to shutdownTimeoutMillis,
-                                                                                          "verbose" to verbose,
-                                                                                          "properties" to mapOfNonEmpty(
-                                                                                                  "property" to properties.orEmpty().map {
-                                                                                                      mapOf("name" to it.name,
-                                                                                                            "value" to it.value)
-                                                                                                  }.unwrapIfSingle()),
-                                                                                          "script" to scripts,
-                                                                                          "customLevel" to customLevels) + filter.filters() + mapOf(
+    fun Config.configToYamlMap() = mapOfNonEmpty("Configuration" to mapOfNonEmpty("advertiser" to advertiser,
+                                                                                  "dest" to dest,
+                                                                                  "monitorInterval" to monitorIntervalSeconds,
+                                                                                  "name" to name,
+                                                                                  "packages" to packages?.joinToString(),
+                                                                                  "schema" to schemaResource,
+                                                                                  "shutdownHook" to isShutdownHookEnabled,
+                                                                                  "status" to status?.name,
+                                                                                  "strict" to strict,
+                                                                                  "shutdownTimeout" to shutdownTimeoutMillis,
+                                                                                  "verbose" to verbose,
+                                                                                  "properties" to mapOfNonEmpty("property" to properties.orEmpty().map {
+                                                                                      mapOf("name" to it.name,
+                                                                                            "value" to it.value)
+                                                                                  }.unwrapIfSingle()),
+                                                                                  "script" to scripts,
+                                                                                  "customLevel" to customLevels) + filter.filters() + mapOf(
             "appenders" to appenders?.groupBy { it.type }?.entries?.associate { (type, appenders) ->
                 // todo: burada olduğu gibi associate kullanılan diğer yerlerde de key'lerin birbirini ezmediğinden emin ol.
                 type to appenders.map { appender ->

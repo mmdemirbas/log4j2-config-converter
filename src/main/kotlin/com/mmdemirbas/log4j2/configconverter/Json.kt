@@ -20,30 +20,22 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.POJONode
 import com.fasterxml.jackson.databind.node.ShortNode
 import com.fasterxml.jackson.databind.node.TextNode
+import com.mmdemirbas.log4j2.configconverter.SnakeYaml.configToYamlMap
 import java.io.Reader
 import java.io.Writer
 
 object Json : ConfigFormat() {
     private val mapper =
-            ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT)
-                .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                .enable(JsonParser.Feature.ALLOW_COMMENTS).enable(SerializationFeature.INDENT_OUTPUT)
 
-    override fun read(reader: Reader): Config {
-        return readWithMapper(reader, mapper)
-    }
-
-    override fun write(config: Config, writer: Writer) {
-        config.writeWithMapper(writer, mapper)
-    }
+    override fun read(reader: Reader) = readWithMapper(reader, mapper)
+    override fun write(config: Config, writer: Writer) = mapper.writeValue(writer, config.configToYamlMap())
 
     fun readWithMapper(reader: Reader, objectMapper: ObjectMapper): Config {
-        val foundRoot = objectMapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true).readTree(reader)
+        val foundRoot = objectMapper.readTree(reader)
         val logicalRoot = foundRoot.singleOrNull() ?: foundRoot
         return (logicalRoot.jsonNodeToMap() as Map<String, Any>).toConfig()
-    }
-
-    fun Config.writeWithMapper(writer: Writer, objectMapper: ObjectMapper) {
-        objectMapper.writeValue(writer, mapOf("Configuration" to this))
     }
 
     private fun JsonNode.jsonNodeToMap(): Any? {
