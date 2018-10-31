@@ -60,15 +60,26 @@ object ConversionTest {
     @Suppress("unused")
     private fun formatsList() = listOf(Properties, Yaml, SnakeYaml, Json, Xml)
 
-    private fun config(resourceName: String, inputFormat: Format): Config {
-        val inputText = ConversionTest::class.java.getResource(resourceName).readText()
-        val inputConfig = inputFormat.load(inputText.reader())
-        return inputConfig
+    private fun config(resourceName: String, format: Format): Config {
+        val formatName = format.javaClass.simpleName
+        val inputText = log("read $resourceName") { ConversionTest::class.java.getResource(resourceName).readText() }
+        return log("$formatName.load()") { format.load(inputText.reader()) }
     }
 
     private fun assertCanConvert(inputConfig: Config, format: Format) {
-        val outputText = inputConfig.toStringAs(format)
-        val outputConfig = format.load(outputText.reader())
+        val formatName = format.javaClass.simpleName
+        val outputText = log("$formatName.save()") { inputConfig.toStringAs(format) }
+        val outputConfig = log("$formatName.load()") { format.load(outputText.reader()) }
         assertEquals(inputConfig, outputConfig)
+    }
+
+    private fun <T> log(title: String, fn: () -> T): T {
+        println()
+        println("===[ $title ]=====================================================================================================================")
+        println()
+        return fn().also {
+            println(it)
+            println()
+        }
     }
 }

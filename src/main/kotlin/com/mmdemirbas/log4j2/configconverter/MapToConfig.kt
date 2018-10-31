@@ -144,7 +144,7 @@ private fun Map<String, Any>.toLoggers(): Loggers {
 private fun Map<String, Any>.toLogger(alias: String): Logger {
     return Logger(alias = effectiveType(explicit("alias", alias)!!, "Logger"),
                   name = string("name"),
-                  level = enum<Level>("level"),
+                  level = enum<Level>("level") ?: Level.off,
                   additivity = bool("additivity"),
                   filter = toFilters(),
                   AppenderRef = toAppenderRefs(),

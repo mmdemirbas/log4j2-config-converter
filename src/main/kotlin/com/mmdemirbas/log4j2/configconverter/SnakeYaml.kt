@@ -43,9 +43,8 @@ object SnakeYaml : Format() {
                 // todo: burada olduğu gibi associate kullanılan diğer yerlerde de key'lerin birbirini ezmediğinden emin ol.
                 type to appenders.map { appender ->
                     mapOfNonEmpty("name" to appender.name,
-                            // todo: alias'ı sırf properties ile reversible yapabilmek için koydum, non-standard property. belki bir flag'e bağlanabilir. başka yerlerde de aynı pattern var.
                                   "alias" to appender.alias) + appender.extra.orEmpty() + appender.Layout?.type?.let {
-                        mapOf(it to appender.Layout?.extra)
+                        mapOf(it to (appender.Layout?.extra ?: mutableMapOf("type" to it)))
                     }.orEmpty() + mapOfNonEmpty("Filters" to appender.filters.filters())
 
                 }.unwrapIfSingle()
