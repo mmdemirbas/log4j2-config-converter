@@ -24,13 +24,13 @@ import com.mmdemirbas.log4j2.configconverter.SnakeYaml.configToYamlMap
 import java.io.Reader
 import java.io.Writer
 
-object Json : ConfigFormat() {
+object Json : Format() {
     private val mapper =
             ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
                 .enable(JsonParser.Feature.ALLOW_COMMENTS).enable(SerializationFeature.INDENT_OUTPUT)
 
-    override fun read(reader: Reader) = readWithMapper(reader, mapper)
-    override fun write(config: Config, writer: Writer) = mapper.writeValue(writer, config.configToYamlMap())
+    override fun load(reader: Reader) = readWithMapper(reader, mapper)
+    override fun save(config: Config, writer: Writer) = mapper.writeValue(writer, config.configToYamlMap())
 
     fun readWithMapper(reader: Reader, objectMapper: ObjectMapper): Config {
         val foundRoot = objectMapper.readTree(reader)

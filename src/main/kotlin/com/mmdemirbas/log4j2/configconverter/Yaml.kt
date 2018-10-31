@@ -9,11 +9,11 @@ import com.mmdemirbas.log4j2.configconverter.SnakeYaml.configToYamlMap
 import java.io.Reader
 import java.io.Writer
 
-object Yaml : ConfigFormat() {
+object Yaml : Format() {
     private val mapper =
             YAMLMapper().disable(WRITE_DOC_START_MARKER).enable(MINIMIZE_QUOTES).setSerializationInclusion(JsonInclude.Include.NON_NULL).enable(
                     JsonParser.Feature.ALLOW_COMMENTS)!!
 
-    override fun read(reader: Reader) = Json.readWithMapper(reader, mapper)
-    override fun write(config: Config, writer: Writer) = mapper.writeValue(writer, config.configToYamlMap())
+    override fun load(reader: Reader) = Json.readWithMapper(reader, mapper)
+    override fun save(config: Config, writer: Writer) = mapper.writeValue(writer, config.configToYamlMap())
 }

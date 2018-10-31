@@ -21,11 +21,11 @@ import java.io.StringReader
 import java.io.Writer
 import javax.xml.parsers.DocumentBuilderFactory
 
-object Xml : ConfigFormat() {
+object Xml : Format() {
     private const val XINCLUDE_FIXUP_LANGUAGE = "http://apache.org/xml/features/xinclude/fixup-language"
     private const val XINCLUDE_FIXUP_BASE_URIS = "http://apache.org/xml/features/xinclude/fixup-base-uris"
 
-    override fun read(reader: Reader): Config {
+    override fun load(reader: Reader): Config {
         val buffer = reader.readText()
         val root = parseXml(buffer)
         val map = root.domNodeToMap() as Map<String, Any>
@@ -104,7 +104,7 @@ object Xml : ConfigFormat() {
     private fun NodeList.toList() = (0 until length).map(this::item)
 
 
-    override fun write(config: Config, writer: Writer) {
+    override fun save(config: Config, writer: Writer) {
         config.configToXmlElement().write(writer)
     }
 

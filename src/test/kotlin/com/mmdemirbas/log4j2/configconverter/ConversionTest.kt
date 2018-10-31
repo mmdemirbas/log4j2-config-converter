@@ -1,34 +1,74 @@
 package com.mmdemirbas.log4j2.configconverter
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Test
-import java.io.StringReader
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
-class ConversionTest {
-    @Test
-    fun `properties is reversible`() {
-        Properties.assertReadWriteGivesSameResult("/com/mmdemirbas/log4j2/configconverter/prod.properties")
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+object ConversionTest {
+    @ParameterizedTest(name = "[{index}] to {0}")
+    @DisplayName("from prod.properties")
+    @MethodSource("formatsList")
+    fun `from properties - prod`(format: Format) {
+        assertCanConvert(config("/com/mmdemirbas/log4j2/configconverter/prod.properties", Properties), format)
     }
 
-    @Test
-    fun `properties to yaml is reversible`() {
-        val propConfig = log("propConfig") {
-            Properties.readResource("/com/mmdemirbas/log4j2/configconverter/prod.properties")
-        }
-        val yamlString = log("yamlString") { propConfig.toString(SnakeYaml) }
-        val yamlConfig = log("yamlConfig") { SnakeYaml.read(StringReader(yamlString)) }
-        assertEquals(propConfig, yamlConfig)
-
-        val propString = log("propString") { yamlConfig.toString(Properties) }
-        val propConfigBack = log("propConfigBack") { Properties.read(StringReader(propString)) }
-        assertEquals(propConfig, propConfigBack)
+    @ParameterizedTest(name = "[{index}] to {0}")
+    @DisplayName("from sample.properties")
+    @MethodSource("formatsList")
+    fun `from properties - sample`(format: Format) {
+        assertCanConvert(config("/com/mmdemirbas/log4j2/configconverter/sample.properties", Properties), format)
     }
 
-    private fun <T> log(title: String, fn: () -> T): T {
-        println("===[ $title ]=====================================================================================================================")
-        return fn().also {
-            println(it)
-            println()
-        }
+    @ParameterizedTest(name = "[{index}] to {0}")
+    @DisplayName("from prod.yaml")
+    @MethodSource("formatsList")
+    fun `from yaml - prod`(format: Format) {
+        assertCanConvert(config("/com/mmdemirbas/log4j2/configconverter/prod.yaml", Yaml), format)
+    }
+
+    @ParameterizedTest(name = "[{index}] to {0}")
+    @DisplayName("from sample.yaml")
+    @MethodSource("formatsList")
+    fun `from yaml - sample`(format: Format) {
+        assertCanConvert(config("/com/mmdemirbas/log4j2/configconverter/sample.yaml", Yaml), format)
+    }
+
+    @ParameterizedTest(name = "[{index}] to {0}")
+    @DisplayName("from prod.xml")
+    @MethodSource("formatsList")
+    fun `from xml - prod`(format: Format) {
+        assertCanConvert(config("/com/mmdemirbas/log4j2/configconverter/prod.xml", Xml), format)
+    }
+
+    @ParameterizedTest(name = "[{index}] to {0}")
+    @DisplayName("from sample.xml")
+    @MethodSource("formatsList")
+    fun `from xml - sample`(format: Format) {
+        assertCanConvert(config("/com/mmdemirbas/log4j2/configconverter/sample.xml", Xml), format)
+    }
+
+    @ParameterizedTest(name = "[{index}] to {0}")
+    @DisplayName("from sample.json")
+    @MethodSource("formatsList")
+    fun `from json - sample`(format: Format) {
+        assertCanConvert(config("/com/mmdemirbas/log4j2/configconverter/sample.json", Json), format)
+    }
+
+    @Suppress("unused")
+    private fun formatsList() = listOf(Properties, Yaml, SnakeYaml, Json, Xml)
+
+    private fun config(resourceName: String, inputFormat: Format): Config {
+        val inputText = ConversionTest::class.java.getResource(resourceName).readText()
+        val inputConfig = inputFormat.load(inputText.reader())
+        return inputConfig
+    }
+
+    private fun assertCanConvert(inputConfig: Config, format: Format) {
+        val outputText = inputConfig.toStringAs(format)
+        val outputConfig = format.load(outputText.reader())
+        assertEquals(inputConfig, outputConfig)
     }
 }

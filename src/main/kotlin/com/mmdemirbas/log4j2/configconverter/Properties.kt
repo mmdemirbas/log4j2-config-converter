@@ -3,10 +3,10 @@ package com.mmdemirbas.log4j2.configconverter
 import java.io.Reader
 import java.io.Writer
 
-object Properties : ConfigFormat() {
+object Properties : Format() {
     // todo: support comments and empty lines when loading
 
-    override fun read(reader: Reader): Config {
+    override fun load(reader: Reader): Config {
         val lines = reader.readLines()
         val config = parseHierarchicalMap(lines)
         return Config(advertiser = config["advertiser"]?.toString(),
@@ -54,9 +54,7 @@ object Properties : ConfigFormat() {
 
     private fun Map<String, Any>.appenderRefs() =
             (this["appenderRef"] as? Map<String, Map<String, Any>>)?.mapMutable { (alias, appenderRef) ->
-                AppenderRef(alias = alias,
-                            ref = appenderRef["ref"]?.toString(),
-                            filter = appenderRef.filters())
+                AppenderRef(alias = alias, ref = appenderRef["ref"]?.toString(), filter = appenderRef.filters())
             }
 
     private fun Map<String, Any>.filters() =
@@ -77,7 +75,7 @@ object Properties : ConfigFormat() {
     }
 
 
-    override fun write(config: Config, writer: Writer) =
+    override fun save(config: Config, writer: Writer) =
             writer.writeHierarchicalMap(map = mapOf("advertiser" to config.advertiser,
                                                     "dest" to config.dest,
                                                     "monitorInterval" to config.monitorIntervalSeconds,

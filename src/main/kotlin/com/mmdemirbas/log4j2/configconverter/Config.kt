@@ -42,8 +42,8 @@ data class Config(var advertiser: String? = null,
                   var loggers: Loggers? = null,
                   var extra: MutableMap<String, Any?>? = null) {
 
-    fun toString(format: ConfigFormat) = StringWriter().use {
-        format.write(this, it)
+    fun toStringAs(format: Format) = StringWriter().use {
+        format.save(this, it)
         it.toString()
     }
 }
@@ -96,4 +96,3 @@ data class RootLogger(var level: Level? = null,
                       var extra: MutableMap<String, Any?>? = null)
 
 data class AppenderRef(var alias: String? = null, var ref: String? = null, var filter: MutableList<Filter>? = null)
-
