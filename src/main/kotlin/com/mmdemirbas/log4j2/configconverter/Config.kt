@@ -77,9 +77,11 @@ data class Appender(var alias: String? = null,
                     var extra: MutableMap<String, Any?>? = null)
 
 
-data class Layout(var type: String? = null, var extra: MutableMap<String, Any?>? = null)
+data class Layout(var type: String? = null,
+                  var extra: MutableMap<String, Any?>? = null)
 
-data class Loggers(var Logger: MutableList<Logger>? = null, var Root: RootLogger? = null)
+data class Loggers(var Logger: MutableList<Logger>? = null,
+                   var Root: RootLogger? = null)
 
 data class Logger(var alias: String? = null,
                   var name: String? = null,
@@ -95,4 +97,6 @@ data class RootLogger(var level: Level? = null,
                       var appenderRef: MutableList<AppenderRef>? = null,
                       var extra: MutableMap<String, Any?>? = null)
 
-data class AppenderRef(var alias: String? = null, var ref: String? = null, var filter: MutableList<Filter>? = null)
+data class AppenderRef(var alias: String? = null,
+                       var ref: String? = null,
+                       var filter: MutableList<Filter>? = null)

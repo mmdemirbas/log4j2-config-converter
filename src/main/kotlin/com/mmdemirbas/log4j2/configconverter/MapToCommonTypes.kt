@@ -32,7 +32,8 @@ fun Map<String, Any>?.bool(key: String) = this?.get(key)?.let {
     }
 }
 
-inline fun <reified T : Enum<T>> Map<String, Any>?.enum(key: String) = string(key)?.asEnum<T>()
+inline fun <reified T : Enum<T>> Map<String, Any>?.enum(key: String) =
+        string(key)?.asEnum<T>()
 
 inline fun <reified E : Enum<E>> String?.asEnum() = this?.let {
     E::class.java.enumConstants.firstOrNull {
@@ -64,7 +65,10 @@ fun Map<String, Any>?.anyString(keys: List<String>,
             return value
         }
     }
-    return if (unacceptables.any { it.equals(default, ignoreCase = true) }) null else default
+    return if (unacceptables.any {
+                it.equals(default,
+                          ignoreCase = true)
+            }) null else default
 }
 
 fun Map<String, Any>?.string(key: String) = this?.get(key)?.toString()
@@ -80,13 +84,22 @@ fun <V> Map<String, V>.asCaseInsensitiveMap(): Map<String, V> {
     return map
 }
 
-fun <V> Map<String, V>?.without(fullMatches: List<String> = emptyList(), suffices: List<String> = emptyList()) =
-        this?.filterNot { (key, _) -> key in fullMatches || suffices.any { key.endsWith(it) } }.toMutableMapOrNull()
+fun <V> Map<String, V>?.without(fullMatches: List<String> = emptyList(),
+                                suffices: List<String> = emptyList()) =
+        this?.filterNot { (key, _) ->
+            key in fullMatches || suffices.any {
+                key.endsWith(it)
+            }
+        }.toMutableMapOrNull()
 
-fun List<Filter>?.toMutableListOrNull() = if (this?.isEmpty() == false) toMutableList() else null
+fun List<Filter>?.toMutableListOrNull() =
+        if (this?.isEmpty() == false) toMutableList() else null
 
-inline fun <T, R> Iterable<T>.flatMapMutable(transform: (T) -> Iterable<R>) = flatMap(transform).toMutableList()
+inline fun <T, R> Iterable<T>.flatMapMutable(transform: (T) -> Iterable<R>) =
+        flatMap(transform).toMutableList()
 
-inline fun <T, R> Iterable<T>.mapMutable(transform: (T) -> R) = map(transform).toMutableList()
+inline fun <T, R> Iterable<T>.mapMutable(transform: (T) -> R) =
+        map(transform).toMutableList()
 
-private fun <K, V> Map<K, V>?.toMutableMapOrNull() = if (this?.isEmpty() == false) toMutableMap() else null
+private fun <K, V> Map<K, V>?.toMutableMapOrNull() =
+        if (this?.isEmpty() == false) toMutableMap() else null

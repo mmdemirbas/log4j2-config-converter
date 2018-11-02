@@ -13,7 +13,8 @@ fun parseHierarchicalMap(lines: List<String>): Map<String, Any> {
     lines.filter { it.isNotBlank() }.forEach { item ->
         normalizedLines += when {
             normalizedLines.lastOrNull()?.endsWith("\\") == true -> {
-                val previousItem = normalizedLines.removeAt(normalizedLines.size - 1)
+                val previousItem =
+                        normalizedLines.removeAt(normalizedLines.size - 1)
                 previousItem.substring(0, previousItem.length - 1) + item
             }
             else                                                 -> item
@@ -26,10 +27,12 @@ fun parseHierarchicalMap(lines: List<String>): Map<String, Any> {
         path.dropLast(1).forEachIndexed { index, part ->
             targetMap = targetMap.getOrPut(part) { mutableMapOf<String, Any>() } as? MutableMap<String, Any> ?:
                     throw RuntimeException("'${path.subList(0,
-                                                            index + 1).joinToString(".")}' used as both leaf and non-leaf node")
+                                                            index + 1).joinToString(
+                            ".")}' used as both leaf and non-leaf node")
         }
         val existingValue = targetMap.put(path.last(), value.trim())
-        if (existingValue is Map<*, *>) throw RuntimeException("'${path.joinToString(".")}' used as both leaf and non-leaf node")
+        if (existingValue is Map<*, *>) throw RuntimeException("'${path.joinToString(
+                ".")}' used as both leaf and non-leaf node")
     }
     return map
 }
@@ -49,10 +52,12 @@ fun Writer.writeHierarchicalMap(prefix: String = "", map: Map<String?, *>?) {
             is Boolean   -> writePair(fullKey, value)
             is Enum<*>   -> writePair(fullKey, value)
             is List<*>   -> writePair(fullKey, value.joinToString())
-            is Map<*, *> -> writeHierarchicalMap(fullKey, value as Map<String?, *>)
+            is Map<*, *> -> writeHierarchicalMap(fullKey,
+                                                 value as Map<String?, *>)
             else         -> TODO("Key '$key' has a value of an unsupported type ${value.javaClass}")
         }
     }
 }
 
-private fun Writer.writePair(fullKey: String, value: Any?) = write("$fullKey=$value\n")
+private fun Writer.writePair(fullKey: String, value: Any?) =
+        write("$fullKey=$value\n")

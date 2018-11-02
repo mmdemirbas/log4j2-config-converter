@@ -27,10 +27,12 @@ import java.io.Writer
 object Json : Format() {
     private val mapper =
             ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
-                .enable(JsonParser.Feature.ALLOW_COMMENTS).enable(SerializationFeature.INDENT_OUTPUT)
+                .enable(JsonParser.Feature.ALLOW_COMMENTS)
+                .enable(SerializationFeature.INDENT_OUTPUT)
 
     override fun load(reader: Reader) = readWithMapper(reader, mapper)
-    override fun save(config: Config, writer: Writer) = mapper.writeValue(writer, config.configToYamlMap())
+    override fun save(config: Config, writer: Writer) =
+            mapper.writeValue(writer, config.configToYamlMap())
 
     fun readWithMapper(reader: Reader, objectMapper: ObjectMapper): Config {
         val foundRoot = objectMapper.readTree(reader)
