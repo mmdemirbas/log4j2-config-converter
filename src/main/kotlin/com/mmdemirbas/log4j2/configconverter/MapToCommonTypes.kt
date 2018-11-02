@@ -55,6 +55,18 @@ fun Map<String, Any>?.map(key: String) = this?.get(key)?.let {
     }
 }
 
+fun Map<String, Any>?.anyString(keys: List<String>,
+                                unacceptables: Set<String?> = emptySet(),
+                                default: String?): String? {
+    keys.forEach { key ->
+        val value = string(key)
+        if (!value.isNullOrEmpty()) {
+            return value
+        }
+    }
+    return if (unacceptables.any { it.equals(default, ignoreCase = true) }) null else default
+}
+
 fun Map<String, Any>?.string(key: String) = this?.get(key)?.toString()
 
 fun <V> Map<String, V>.asCaseInsensitiveMap(): Map<String, V> {
@@ -71,13 +83,10 @@ fun <V> Map<String, V>.asCaseInsensitiveMap(): Map<String, V> {
 fun <V> Map<String, V>?.without(fullMatches: List<String> = emptyList(), suffices: List<String> = emptyList()) =
         this?.filterNot { (key, _) -> key in fullMatches || suffices.any { key.endsWith(it) } }.toMutableMapOrNull()
 
+fun List<Filter>?.toMutableListOrNull() = if (this?.isEmpty() == false) toMutableList() else null
 
-fun Map<String, Any>.explicit(key: String, default: String?): String? {
-    val explicit = this[key] as? String
-    return when {
-        explicit.isNullOrEmpty() -> default
-        else                     -> explicit
-    }
-}
+inline fun <T, R> Iterable<T>.flatMapMutable(transform: (T) -> Iterable<R>) = flatMap(transform).toMutableList()
+
+inline fun <T, R> Iterable<T>.mapMutable(transform: (T) -> R) = map(transform).toMutableList()
 
 private fun <K, V> Map<K, V>?.toMutableMapOrNull() = if (this?.isEmpty() == false) toMutableMap() else null

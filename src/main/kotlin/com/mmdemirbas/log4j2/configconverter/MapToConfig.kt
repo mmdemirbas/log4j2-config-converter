@@ -31,7 +31,7 @@ fun Map<String, Any>.toConfig(): Config {
                   strict = map.bool("strict"),
                   shutdownTimeoutMillis = map.long("shutdownTimeout"),
                   verbose = map.string("verbose"),
-                  properties = map.toProperties(),
+                  properties = map.list("Properties")?.flatMapMutable { (it as Map<String, Any>).toProperty() },
                   scripts = null, // todo: scripts support
                   customLevels = null, // todo: customLevels support
                   filter = map.toFilters(),
@@ -39,51 +39,33 @@ fun Map<String, Any>.toConfig(): Config {
                   loggers = map.toLoggers())
 }
 
-private fun Map<String, Any>.toProperties(): MutableList<Property>? {
-    return list("Properties")?.flatMapMutable { x ->
-        (x as Map<String, Any>).toProperty()
-    }
-}
-
 private fun Map<String, Any>.toProperty(): List<Property> {
     return asCaseInsensitiveMap().list("property")!!.map { propertyMap ->
         propertyMap as Map<String, Any>
-        Property(name = propertyMap.string("name"), value = propertyMap.string("value"))
+        Property(name = propertyMap.string("name"),
+                 value = propertyMap.string("value"))
     }
 }
 
 private fun Map<String, Any>.toAppenders(): MutableList<Appender>? {
     val appenders = this["Appenders"]
     return when (appenders) {
-        is List<*>   -> appenders.map {
-            it as Map<String, Any>
-            "Appender" to (it.asCaseInsensitiveMap().map("Appender") ?: it)
+        is List<*>   -> appenders.mapMutable { appendersMap ->
+            // todo: cast'ler varsayımsal olmasın, handle edilmeyen case'leri gölgelemesin.
+            ((appendersMap as Map<String, Any>).asCaseInsensitiveMap().map("Appender")
+             ?: appendersMap).toAppender("Appender")
         }
         is Map<*, *> -> (appenders as Map<String, Any>?)?.asCaseInsensitiveMap()?.let { appendersMap ->
             val appenders = appendersMap["Appender"] ?: appendersMap
             when (appenders) {
-                is List<*>   -> appenders.map { appender ->
-                    // todo: cast'ler varsayımsal olmasın, handle edilmeyen case'leri gölgelemesin.
-                    appender as Map<String, Any>
-                    appender.string("type") to appender.asCaseInsensitiveMap()
-                }
-                is Map<*, *> -> appenders.entries.flatMap { (alias, appender) ->
+                is List<*>   -> appenders.mapMutable { (it as Map<String, Any>).toAppender() }
+                is Map<*, *> -> appenders.entries.flatMapMutable { (alias, appender) ->
                     when (appender) {
-                        is List<*>   -> {
-                            val list = appender as List<Map<String, Any>>
-                            list.map {
-                                it.explicit("alias",
-                                            alias as String) to (it + mapOfNonEmpty("type" to it.explicit("type",
-                                                                                                          alias as String)))
-                            }
+                        is List<*>   -> (appender).map {
+                            (it as Map<String, Any>).toAppender(alias as String?)
                         }
-                        is Map<*, *> -> {
-                            appender as Map<String, Any>
-                            listOf(appender.explicit("alias",
-                                                     alias as String) to (appender + mapOfNonEmpty("type" to appender.explicit(
-                                    "type",
-                                    alias as String))).asCaseInsensitiveMap())
-                        }
+                        is Map<*, *> -> listOf((appender as Map<String, Any>).toAppender(
+                                alias as String?))
                         else         -> TODO()
                     }
                 }
@@ -91,43 +73,63 @@ private fun Map<String, Any>.toAppenders(): MutableList<Appender>? {
             }
         }
         else         -> TODO()
-    }?.mapMutable { (alias, appender) ->
-        appender.toAppender(alias)
     }
 }
 
-private fun Map<String, Any>.toAppender(alias: String?): Appender {
-    val type = effectiveType(alias!!, "Appender")
-    return Appender(alias = if (alias.equals(type, ignoreCase = true) || alias.equals("appender",
-                                                                                      ignoreCase = true)) null else alias,
-                    type = type,
-                    name = string("name"),
-                    Layout = toLayout(),
-                    filters = toFilters(),
-                    extra = without(fullMatches = listOf("type", "name", "alias", "Filters", "Layout"),
-                                    suffices = listOf("Layout", "Filter")))
+private fun Map<String, Any>.toAppender(defaultAlias: String? = null): Appender {
+    val type = anyString(keys = listOf("type"), default = defaultAlias)
+    val alias =
+            anyString(keys = listOf("alias", "type"), default = defaultAlias)
+    val map = (this + mapOfNonEmpty("type" to type)).asCaseInsensitiveMap()
+    val effectiveType =
+            map.anyString(keys = listOf("type"),
+                          unacceptables = setOf("Appender"),
+                          default = alias!!)
+    val effectiveAlias = when {
+        alias.equals(effectiveType, ignoreCase = true) -> null
+        alias.equals("appender", ignoreCase = true)    -> null
+        else                                           -> alias
+    }
+    return Appender(alias = effectiveAlias,
+                    type = effectiveType,
+                    name = map.string("name"),
+                    Layout = map.toLayout(),
+                    filters = map.toFilters(),
+                    extra = map.without(fullMatches = listOf("type",
+                                                             "name",
+                                                             "alias",
+                                                             "Filters",
+                                                             "Layout"),
+                                        suffices = listOf("Layout", "Filter")))
 }
 
 private fun Map<String, Any>.toLayout(): Layout? {
-    val layoutMap = map("Layout")?.let { mapOf("Layout" to it) } ?: keys.filter { it.endsWith("Layout") }.map { key ->
-        mapOf(key to map(key))
-    }.firstOrNull()
+    val layoutMap =
+            map("Layout")?.let { mapOf("Layout" to it) }
+            ?: keys.filter { it.endsWith("Layout") }.map { key ->
+                mapOf(key to map(key))
+            }.firstOrNull()
     return layoutMap?.let {
         val (alias, layout) = layoutMap.entries.first()
-        Layout(type = layout.effectiveType(alias, "Layout"),
-               extra = layout.without(fullMatches = listOf("type", "Layout"), suffices = listOf("Layout")))
+        Layout(type = layout.anyString(keys = listOf("type"),
+                                       unacceptables = setOf("Layout"),
+                                       default = alias),
+               extra = layout.without(fullMatches = listOf("type", "Layout"),
+                                      suffices = listOf("Layout")))
     }
 }
 
 private fun Map<String, Any>.toLoggers(): Loggers {
     val wrapper = this["Loggers"]
     val loggers = when (wrapper) {
-        is Map<*, *> -> (wrapper as Map<String, Any>).asCaseInsensitiveMap().list("Logger")
+        is Map<*, *> -> (wrapper as Map<String, Any>).asCaseInsensitiveMap().list(
+                "Logger")
         is List<*>   -> wrapper.filter { (it as? Map<String, Any>)?.entries?.firstOrNull()?.key != "Root" }
         else         -> TODO()
     }
     val root = when (wrapper) {
-        is Map<*, *> -> (wrapper as Map<String, Any>).asCaseInsensitiveMap().map("Root")
+        is Map<*, *> -> (wrapper as Map<String, Any>).asCaseInsensitiveMap().map(
+                "Root")
         is List<*>   -> wrapper.firstOrNull { (it as? Map<String, Any>)?.entries?.firstOrNull()?.key == "Root" } as Map<String, Any>
         else         -> TODO()
     }
@@ -142,13 +144,19 @@ private fun Map<String, Any>.toLoggers(): Loggers {
 }
 
 private fun Map<String, Any>.toLogger(alias: String): Logger {
-    return Logger(alias = effectiveType(explicit("alias", alias)!!, "Logger"),
+    return Logger(alias = anyString(keys = listOf("type", "alias"),
+                                    unacceptables = setOf("Logger"),
+                                    default = alias),
                   name = string("name"),
                   level = enum<Level>("level") ?: Level.off,
                   additivity = bool("additivity"),
                   filter = toFilters(),
                   AppenderRef = toAppenderRefs(),
-                  extra = without(fullMatches = listOf("name", "alias", "level", "additivity", "AppenderRef"),
+                  extra = without(fullMatches = listOf("name",
+                                                       "alias",
+                                                       "level",
+                                                       "additivity",
+                                                       "AppenderRef"),
                                   suffices = listOf("Filter")))
 }
 
@@ -157,13 +165,15 @@ private fun Map<String, Any>.toRootLogger(): RootLogger {
     return RootLogger(level = root.enum<Level>("level"),
                       filter = root.toFilters(),
                       appenderRef = root.toAppenderRefs(),
-                      extra = root.without(fullMatches = listOf("level", "AppenderRef"), suffices = listOf("Filter")))
+                      extra = root.without(fullMatches = listOf("level",
+                                                                "AppenderRef"),
+                                           suffices = listOf("Filter")))
 }
 
-private fun Map<String, Any>?.toAppenderRefs() = map("AppenderRef")?.let { appenderRef ->
-    mutableListOf(AppenderRef(alias = appenderRef.string("alias"),
-                              ref = appenderRef.string("ref"),
-                              filter = appenderRef.toFilters()))
+private fun Map<String, Any>?.toAppenderRefs() = map("AppenderRef")?.run {
+    mutableListOf(AppenderRef(alias = string("alias"),
+                              ref = string("ref"),
+                              filter = toFilters()))
 }
 
 private fun Map<String, Any>?.toFilters(): MutableList<Filter>? {
@@ -183,27 +193,16 @@ private fun Map<String, Any>?.toFilters(): MutableList<Filter>? {
 }
 
 private fun Map<String, Any>.toFilter(alias: String): Filter {
-    val effectiveAlias = explicit("alias", alias)
-    val effectiveType = explicit("type", alias)
-    return Filter(alias = if (effectiveAlias.equals(effectiveType, ignoreCase = true) || effectiveAlias.equals("filter",
-                                                                                                               ignoreCase = true)) null else effectiveAlias,
+    val effectiveType = anyString(keys = listOf("type"), default = alias)
+    return Filter(alias = anyString(keys = listOf("alias"),
+                                    unacceptables = setOf("filter",
+                                                          effectiveType),
+                                    default = alias),
                   type = effectiveType,
                   onMismatch = enum<FilterDecision>("onMismatch"),
                   onMatch = enum<FilterDecision>("onMatch"),
-                  extra = without(fullMatches = listOf("type", "alias", "onMismatch", "onMatch")))
+                  extra = without(fullMatches = listOf("type",
+                                                       "alias",
+                                                       "onMismatch",
+                                                       "onMatch")))
 }
-
-private fun Map<String, Any>?.effectiveType(suggested: String, unacceptable: String): String? {
-    val type = string("type")
-    return when {
-        type?.isNotEmpty() == true                        -> type
-        suggested.equals(unacceptable, ignoreCase = true) -> type
-        else                                              -> suggested
-    }
-}
-
-private fun List<Filter>?.toMutableListOrNull() = if (this?.isEmpty() == false) toMutableList() else null
-
-private inline fun <T, R> Iterable<T>.flatMapMutable(transform: (T) -> Iterable<R>) = flatMap(transform).toMutableList()
-
-private inline fun <T, R> Iterable<T>.mapMutable(transform: (T) -> R) = map(transform).toMutableList()
