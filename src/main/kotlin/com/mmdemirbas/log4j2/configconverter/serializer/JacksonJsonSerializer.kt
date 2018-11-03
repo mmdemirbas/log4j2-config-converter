@@ -1,4 +1,4 @@
-package com.mmdemirbas.log4j2.configconverter
+package com.mmdemirbas.log4j2.configconverter.serializer
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonParser
@@ -20,18 +20,22 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.POJONode
 import com.fasterxml.jackson.databind.node.ShortNode
 import com.fasterxml.jackson.databind.node.TextNode
-import com.mmdemirbas.log4j2.configconverter.SnakeYaml.configToYamlMap
+import com.mmdemirbas.log4j2.configconverter.Config
+import com.mmdemirbas.log4j2.configconverter.Serializer
+import com.mmdemirbas.log4j2.configconverter.serializer.SnakeYamlSerializer.configToYamlMap
+import com.mmdemirbas.log4j2.configconverter.util.toConfig
 import java.io.Reader
 import java.io.Writer
 
-object Json : Format() {
+object JacksonJsonSerializer : Serializer(Format.JSON) {
     private val mapper =
             ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)
                 .enable(JsonParser.Feature.ALLOW_COMMENTS)
                 .enable(SerializationFeature.INDENT_OUTPUT)
 
-    override fun load(reader: Reader) = readWithMapper(reader, mapper)
-    override fun save(config: Config, writer: Writer) =
+    override fun deserialize(reader: Reader) = readWithMapper(reader, mapper)
+
+    override fun serialize(config: Config, writer: Writer) =
             mapper.writeValue(writer, config.configToYamlMap())
 
     fun readWithMapper(reader: Reader, objectMapper: ObjectMapper): Config {

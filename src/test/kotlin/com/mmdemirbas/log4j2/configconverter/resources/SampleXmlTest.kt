@@ -1,7 +1,25 @@
-package com.mmdemirbas.log4j2.configconverter
+package com.mmdemirbas.log4j2.configconverter.resources
 
-object XmlTest : BaseFormatTest(Xml,
-                                "/com/mmdemirbas/log4j2/configconverter/sample.xml",
+import com.mmdemirbas.log4j2.configconverter.Appender
+import com.mmdemirbas.log4j2.configconverter.AppenderRef
+import com.mmdemirbas.log4j2.configconverter.Config
+import com.mmdemirbas.log4j2.configconverter.Filter
+import com.mmdemirbas.log4j2.configconverter.FilterDecision
+import com.mmdemirbas.log4j2.configconverter.Layout
+import com.mmdemirbas.log4j2.configconverter.Level
+import com.mmdemirbas.log4j2.configconverter.Logger
+import com.mmdemirbas.log4j2.configconverter.Loggers
+import com.mmdemirbas.log4j2.configconverter.Property
+import com.mmdemirbas.log4j2.configconverter.RootLogger
+import com.mmdemirbas.log4j2.configconverter.Serializer.Format.XML
+import com.mmdemirbas.log4j2.configconverter.TestBase
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.DisplayName
+
+@Disabled
+@DisplayName("sample.xml")
+object SampleXmlTest : TestBase(XML,
+                                readResource("/com/mmdemirbas/log4j2/configconverter/sample.xml"),
                                 Config(status = Level.debug,
                                        strict = true,
                                        name = "XMLConfigTest",

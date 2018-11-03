@@ -1,5 +1,6 @@
-package com.mmdemirbas.log4j2.configconverter
+package com.mmdemirbas.log4j2.configconverter.util
 
+import com.mmdemirbas.log4j2.configconverter.Filter
 import java.util.*
 
 /**
@@ -66,8 +67,7 @@ fun Map<String, Any>?.anyString(keys: List<String>,
         }
     }
     return if (unacceptables.any {
-                it.equals(default,
-                          ignoreCase = true)
+                it.equals(default, ignoreCase = true)
             }) null else default
 }
 
@@ -103,3 +103,4 @@ inline fun <T, R> Iterable<T>.mapMutable(transform: (T) -> R) =
 
 private fun <K, V> Map<K, V>?.toMutableMapOrNull() =
         if (this?.isEmpty() == false) toMutableMap() else null
+

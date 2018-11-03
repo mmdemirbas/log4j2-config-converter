@@ -1,12 +1,27 @@
-package com.mmdemirbas.log4j2.configconverter
+package com.mmdemirbas.log4j2.configconverter.serializer
 
+import com.mmdemirbas.log4j2.configconverter.Appender
+import com.mmdemirbas.log4j2.configconverter.AppenderRef
+import com.mmdemirbas.log4j2.configconverter.Config
+import com.mmdemirbas.log4j2.configconverter.Filter
+import com.mmdemirbas.log4j2.configconverter.FilterDecision
+import com.mmdemirbas.log4j2.configconverter.Layout
+import com.mmdemirbas.log4j2.configconverter.Level
+import com.mmdemirbas.log4j2.configconverter.Logger
+import com.mmdemirbas.log4j2.configconverter.Loggers
+import com.mmdemirbas.log4j2.configconverter.Property
+import com.mmdemirbas.log4j2.configconverter.RootLogger
+import com.mmdemirbas.log4j2.configconverter.Serializer
+import com.mmdemirbas.log4j2.configconverter.util.asEnum
+import com.mmdemirbas.log4j2.configconverter.util.parseHierarchicalMap
+import com.mmdemirbas.log4j2.configconverter.util.writeHierarchicalMap
 import java.io.Reader
 import java.io.Writer
 
-object Properties : Format() {
+object PropertiesSerializer : Serializer(Format.PROPERTIES) {
     // todo: support comments and empty lines when loading
 
-    override fun load(reader: Reader): Config {
+    override fun deserialize(reader: Reader): Config {
         val lines = reader.readLines()
         val config = parseHierarchicalMap(lines)
         return Config(advertiser = config["advertiser"]?.toString(),
@@ -41,29 +56,39 @@ object Properties : Format() {
                                                             "layout",
                                                             "filter"))
                       },
-                      loggers = Loggers(Logger = (config["logger"] as? Map<String, Map<String, Any>>)?.mapMutable { (alias, logger) ->
-                          val name = logger["name"]?.toString()
-                          Logger(alias = if (alias.equals(name)) null else alias,
-                                 name = name,
-                                 level = logger["level"]?.toString()?.asEnum<Level>(),
-                                 additivity = logger["additivity"]?.toString()?.toBoolean(),
-                                 filter = logger.filters(),
-                                 AppenderRef = logger.appenderRefs(),
-                                 extra = logger.without("name",
-                                                        "level",
-                                                        "additivity",
-                                                        "filter",
-                                                        "appenderRef"))
-                      },
-                                        Root = (config["rootLogger"] as? Map<String, Any>)?.let { rootLogger ->
-                                            RootLogger(level = rootLogger["level"]?.toString()?.asEnum<Level>(),
-                                                       filter = rootLogger.filters(),
-                                                       appenderRef = rootLogger.appenderRefs(),
-                                                       extra = rootLogger.without(
-                                                               "level",
-                                                               "filter",
-                                                               "appenderRef"))
-                                        }))
+                      loggers = toLoggers(config))
+    }
+
+    private fun toLoggers(config: Map<String, Any>): Loggers? {
+        val Logger =
+                (config["logger"] as? Map<String, Map<String, Any>>)?.mapMutable { (alias, logger) ->
+                    val name = logger["name"]?.toString()
+                    Logger(alias = if (alias.equals(name)) null else alias,
+                           name = name,
+                           level = logger["level"]?.toString()?.asEnum<Level>(),
+                           additivity = logger["additivity"]?.toString()?.toBoolean(),
+                           filter = logger.filters(),
+                           AppenderRef = logger.appenderRefs(),
+                           extra = logger.without("name",
+                                                  "level",
+                                                  "additivity",
+                                                  "filter",
+                                                  "appenderRef"))
+                }
+        val Root =
+                (config["rootLogger"] as? Map<String, Any>)?.let { rootLogger ->
+                    RootLogger(level = rootLogger["level"]?.toString()?.asEnum<Level>(),
+                               filter = rootLogger.filters(),
+                               appenderRef = rootLogger.appenderRefs(),
+                               extra = rootLogger.without("level",
+                                                          "filter",
+                                                          "appenderRef"))
+                }
+        return when {
+            Root == null && Logger == null -> null
+            else                           -> Loggers(Logger = Logger,
+                                                      Root = Root)
+        }
     }
 
     private fun Map<String, Any>.appenderRefs() =
@@ -93,7 +118,7 @@ object Properties : Format() {
     }
 
 
-    override fun save(config: Config, writer: Writer) =
+    override fun serialize(config: Config, writer: Writer) =
             writer.writeHierarchicalMap(map = mapOf("advertiser" to config.advertiser,
                                                     "dest" to config.dest,
                                                     "monitorInterval" to config.monitorIntervalSeconds,

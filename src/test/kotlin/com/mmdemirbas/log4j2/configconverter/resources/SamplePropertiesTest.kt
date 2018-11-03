@@ -1,7 +1,22 @@
-package com.mmdemirbas.log4j2.configconverter
+package com.mmdemirbas.log4j2.configconverter.resources
 
-object PropertiesTest : BaseFormatTest(Properties,
-                                       "/com/mmdemirbas/log4j2/configconverter/sample.properties",
+import com.mmdemirbas.log4j2.configconverter.Appender
+import com.mmdemirbas.log4j2.configconverter.AppenderRef
+import com.mmdemirbas.log4j2.configconverter.Config
+import com.mmdemirbas.log4j2.configconverter.Filter
+import com.mmdemirbas.log4j2.configconverter.Layout
+import com.mmdemirbas.log4j2.configconverter.Level
+import com.mmdemirbas.log4j2.configconverter.Logger
+import com.mmdemirbas.log4j2.configconverter.Loggers
+import com.mmdemirbas.log4j2.configconverter.Property
+import com.mmdemirbas.log4j2.configconverter.RootLogger
+import com.mmdemirbas.log4j2.configconverter.Serializer.Format.PROPERTIES
+import com.mmdemirbas.log4j2.configconverter.TestBase
+import org.junit.jupiter.api.DisplayName
+
+@DisplayName("sample.properties")
+object SamplePropertiesTest : TestBase(PROPERTIES,
+                                       readResource("/com/mmdemirbas/log4j2/configconverter/sample.properties"),
                                        Config(status = Level.error,
                                               name = "PropertiesConfig",
                                               dest = "err",

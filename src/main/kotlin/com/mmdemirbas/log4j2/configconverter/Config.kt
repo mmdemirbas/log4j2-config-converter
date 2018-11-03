@@ -42,10 +42,15 @@ data class Config(var advertiser: String? = null,
                   var loggers: Loggers? = null,
                   var extra: MutableMap<String, Any?>? = null) {
 
-    fun toStringAs(format: Format) = StringWriter().use {
-        format.save(this, it)
-        it.toString()
-    }
+}
+
+fun Config.toString(serializer: Serializer) = StringWriter().use { writer ->
+    serializer.serialize(this, writer)
+    writer.toString()
+}
+
+fun String.toConfig(serializer: Serializer) = reader().use { reader ->
+    serializer.deserialize(reader)
 }
 
 enum class Level { all, trace, debug, info, warn, error, fatal, off }

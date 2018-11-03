@@ -1,9 +1,16 @@
-package com.mmdemirbas.log4j2.configconverter
+package com.mmdemirbas.log4j2.configconverter.serializer
 
+import com.mmdemirbas.log4j2.configconverter.AppenderRef
+import com.mmdemirbas.log4j2.configconverter.Config
+import com.mmdemirbas.log4j2.configconverter.Filter
+import com.mmdemirbas.log4j2.configconverter.Serializer
+import com.mmdemirbas.log4j2.configconverter.util.map
+import com.mmdemirbas.log4j2.configconverter.util.mapOfNonEmpty
+import com.mmdemirbas.log4j2.configconverter.util.toConfig
 import java.io.Reader
 import java.io.Writer
 
-object SnakeYaml : Format() {
+object SnakeYamlSerializer : Serializer(Format.YAML) {
     // todo: unwrapIfSingle özelliğinin çalıştığından emin olmak için test yazılabilir. Benzer şekilde farklı feature'lar için testler yazılmalı
 
     // todo: unwrapIfSingle özelliği, generate edilen map'lerde kullanılmalı mı? Kullanılacaksa mümkün olan her yerde mi kullanılsa? Okuma kısmı nasıl olacak?
@@ -14,12 +21,12 @@ object SnakeYaml : Format() {
 
     // todo: parsing işlemi olabildiğince toleranslı yapılsın. Parse edilemeyen kısımla ilgili warning verilsin ama işlem iptal edilmesin.
 
-    override fun load(reader: Reader): Config {
+    override fun deserialize(reader: Reader): Config {
         return (org.yaml.snakeyaml.Yaml().load(reader) as Map<String, Any>).map(
                 "Configuration")!!.toConfig()
     }
 
-    override fun save(config: Config, writer: Writer) {
+    override fun serialize(config: Config, writer: Writer) {
         writer.write(org.yaml.snakeyaml.Yaml().dumpAsMap(config.configToYamlMap()))
     }
 
@@ -41,7 +48,7 @@ object SnakeYaml : Format() {
                                                                              "value" to it.value)
                                                                    }.unwrapIfSingle()),
                                                            "script" to scripts,
-                                                           "customLevel" to customLevels) + filter.filters() + mapOf(
+                                                           "customLevel" to customLevels) + filter.filters() + mapOfNonEmpty(
                     "appenders" to appenders?.groupBy { it.type }?.entries?.associate { (type, appenders) ->
                         // todo: burada olduğu gibi associate kullanılan diğer yerlerde de key'lerin birbirini ezmediğinden emin ol.
                         type to appenders.map { appender ->
@@ -53,7 +60,7 @@ object SnakeYaml : Format() {
 
                         }.unwrapIfSingle()
                     },
-                    "Loggers" to mapOf("logger" to loggers?.Logger?.map {
+                    "Loggers" to mapOfNonEmpty("logger" to loggers?.Logger?.map {
                         mapOfNonEmpty("name" to it.name,
                                       "alias" to it.alias,
                                       "level" to it.level?.name,

@@ -1,4 +1,4 @@
-package com.mmdemirbas.log4j2.configconverter
+package com.mmdemirbas.log4j2.configconverter.util
 
 /**
  * @author Muhammed Demirbaş

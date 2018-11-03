@@ -1,5 +1,10 @@
-package com.mmdemirbas.log4j2.configconverter
+package com.mmdemirbas.log4j2.configconverter.serializer
 
+import com.mmdemirbas.log4j2.configconverter.Config
+import com.mmdemirbas.log4j2.configconverter.Serializer
+import com.mmdemirbas.log4j2.configconverter.Serializer.Format.XML
+import com.mmdemirbas.log4j2.configconverter.util.mapOfNonEmpty
+import com.mmdemirbas.log4j2.configconverter.util.toConfig
 import org.apache.logging.log4j.core.util.Throwables
 import org.w3c.dom.Attr
 import org.w3c.dom.CDATASection
@@ -21,13 +26,13 @@ import java.io.StringReader
 import java.io.Writer
 import javax.xml.parsers.DocumentBuilderFactory
 
-object Xml : Format() {
+object XmlSerializer : Serializer(XML) {
     private const val XINCLUDE_FIXUP_LANGUAGE =
             "http://apache.org/xml/features/xinclude/fixup-language"
     private const val XINCLUDE_FIXUP_BASE_URIS =
             "http://apache.org/xml/features/xinclude/fixup-base-uris"
 
-    override fun load(reader: Reader): Config {
+    override fun deserialize(reader: Reader): Config {
         val buffer = reader.readText()
         val root = parseXml(buffer)
         val map = root.domNodeToMap() as Map<String, Any>
@@ -113,7 +118,7 @@ object Xml : Format() {
     private fun NodeList.toList() = (0 until length).map(this::item)
 
 
-    override fun save(config: Config, writer: Writer) {
+    override fun serialize(config: Config, writer: Writer) {
         config.configToXmlElement().write(writer)
     }
 
@@ -161,8 +166,7 @@ object Xml : Format() {
                         write(">\n")
                         if (!value.isNullOrEmpty()) write("$padding$value")
                         elements?.forEach { element ->
-                            element.write(writer,
-                                          level + 1)
+                            element.write(writer, level + 1)
                         }
                         write("$padding</$name>\n")
                     }

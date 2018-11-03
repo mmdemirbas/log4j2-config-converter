@@ -1,4 +1,16 @@
-package com.mmdemirbas.log4j2.configconverter
+package com.mmdemirbas.log4j2.configconverter.util
+
+import com.mmdemirbas.log4j2.configconverter.Appender
+import com.mmdemirbas.log4j2.configconverter.AppenderRef
+import com.mmdemirbas.log4j2.configconverter.Config
+import com.mmdemirbas.log4j2.configconverter.Filter
+import com.mmdemirbas.log4j2.configconverter.FilterDecision
+import com.mmdemirbas.log4j2.configconverter.Layout
+import com.mmdemirbas.log4j2.configconverter.Level
+import com.mmdemirbas.log4j2.configconverter.Logger
+import com.mmdemirbas.log4j2.configconverter.Loggers
+import com.mmdemirbas.log4j2.configconverter.Property
+import com.mmdemirbas.log4j2.configconverter.RootLogger
 
 /**
  * @author Muhammed Demirbaş
@@ -50,6 +62,7 @@ private fun Map<String, Any>.toProperty(): List<Property> {
 private fun Map<String, Any>.toAppenders(): MutableList<Appender>? {
     val appenders = this["Appenders"]
     return when (appenders) {
+        null         -> null
         is List<*>   -> appenders.mapMutable { appendersMap ->
             // todo: cast'ler varsayımsal olmasın, handle edilmeyen case'leri gölgelemesin.
             ((appendersMap as Map<String, Any>).asCaseInsensitiveMap().map("Appender")
@@ -66,13 +79,13 @@ private fun Map<String, Any>.toAppenders(): MutableList<Appender>? {
                         }
                         is Map<*, *> -> listOf((appender as Map<String, Any>).toAppender(
                                 alias as String?))
-                        else         -> TODO()
+                        else         -> notImplementedFor(appender)
                     }
                 }
-                else         -> TODO()
+                else         -> notImplementedFor(appenders)
             }
         }
-        else         -> TODO()
+        else         -> notImplementedFor(appenders)
     }
 }
 
@@ -119,28 +132,33 @@ private fun Map<String, Any>.toLayout(): Layout? {
     }
 }
 
-private fun Map<String, Any>.toLoggers(): Loggers {
+private fun Map<String, Any>.toLoggers(): Loggers? {
     val wrapper = this["Loggers"]
     val loggers = when (wrapper) {
+        null         -> null
         is Map<*, *> -> (wrapper as Map<String, Any>).asCaseInsensitiveMap().list(
                 "Logger")
         is List<*>   -> wrapper.filter { (it as? Map<String, Any>)?.entries?.firstOrNull()?.key != "Root" }
-        else         -> TODO()
+        else         -> notImplementedFor(wrapper)
     }
     val root = when (wrapper) {
+        null         -> null
         is Map<*, *> -> (wrapper as Map<String, Any>).asCaseInsensitiveMap().map(
                 "Root")
         is List<*>   -> wrapper.firstOrNull { (it as? Map<String, Any>)?.entries?.firstOrNull()?.key == "Root" } as Map<String, Any>
-        else         -> TODO()
+        else         -> notImplementedFor(wrapper)
     }
-    return Loggers(Logger = loggers?.mapMutable {
-        val map = it as Map<String, Any>
-        val (alias, logger) = map.entries.first()
-        when (logger) {
-            is Map<*, *> -> (logger as Map<String, Any>).toLogger(alias)
-            else         -> map.toLogger("Logger")
-        }
-    }, Root = root?.toRootLogger())
+    when {
+        loggers == null && root == null -> return null
+        else                            -> return Loggers(Logger = loggers?.mapMutable {
+            val map = it as Map<String, Any>
+            val (alias, logger) = map.entries.first()
+            when (logger) {
+                is Map<*, *> -> (logger as Map<String, Any>).toLogger(alias)
+                else         -> map.toLogger("Logger")
+            }
+        }, Root = root?.toRootLogger())
+    }
 }
 
 private fun Map<String, Any>.toLogger(alias: String): Logger {
@@ -185,9 +203,9 @@ private fun Map<String, Any>?.toFilters(): MutableList<Filter>? {
     return items?.mapMutable { item ->
         val (alias, props) = (item as Map<String, Any>).entries.first()
         when (props) {
-            is List<*>   -> TODO()
+            is List<*>   -> notImplementedFor(props)
             is Map<*, *> -> (props as Map<String, Any>).toFilter(alias)
-            else         -> TODO("type: ${props.javaClass.name}  toString: $props")
+            else         -> notImplementedFor(props)
         }
     }.toMutableListOrNull()
 }
@@ -206,3 +224,6 @@ private fun Map<String, Any>.toFilter(alias: String): Filter {
                                                        "onMismatch",
                                                        "onMatch")))
 }
+
+private fun notImplementedFor(any: Any?): Nothing =
+        TODO("type: ${any?.javaClass?.name}  toString: $any")
