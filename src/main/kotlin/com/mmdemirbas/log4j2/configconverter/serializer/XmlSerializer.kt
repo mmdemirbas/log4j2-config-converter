@@ -130,7 +130,7 @@ object XmlSerializer : Serializer(XML) {
                                                      "status" to status?.name,
                                                      "strict" to strict?.toString(),
                                                      "name" to name,
-                                                     "packages" to packages?.joinToString(),
+                                                     "packages" to packages,
                                                      "schema" to schemaResource,
                                                      "shutdownHook" to isShutdownHookEnabled?.toString(),
                                                      "shutdownTimeout" to shutdownTimeoutMillis?.toString(),

@@ -9,5 +9,5 @@ import org.junit.jupiter.api.DisplayName
 @Disabled
 @DisplayName("prod.xml")
 object ProdXmlTest : TestBase(XML,
-                              readResource("/com/mmdemirbas/log4j2/configconverter/prod.xml"),
+                              fromResource("/com/mmdemirbas/log4j2/configconverter/prod.xml"),
                               Config())

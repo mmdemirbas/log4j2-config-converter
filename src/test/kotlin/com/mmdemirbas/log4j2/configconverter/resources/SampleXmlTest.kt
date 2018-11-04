@@ -19,11 +19,11 @@ import org.junit.jupiter.api.DisplayName
 @Disabled
 @DisplayName("sample.xml")
 object SampleXmlTest : TestBase(XML,
-                                readResource("/com/mmdemirbas/log4j2/configconverter/sample.xml"),
+                                fromResource("/com/mmdemirbas/log4j2/configconverter/sample.xml"),
                                 Config(status = Level.debug,
                                        strict = true,
                                        name = "XMLConfigTest",
-                                       packages = mutableListOf("org.apache.logging.log4j.test"),
+                                       packages = "org.apache.logging.log4j.test",
                                        properties = mutableListOf(Property("filename",
                                                                            "target/test.log")),
                                        filter = mutableListOf(Filter(type = "ThresholdFilter",

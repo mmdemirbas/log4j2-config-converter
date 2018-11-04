@@ -16,7 +16,7 @@ import org.junit.jupiter.api.DisplayName
 
 @DisplayName("sample.yaml")
 object SampleYamlTest : TestBase(YAML,
-                                 readResource("/com/mmdemirbas/log4j2/configconverter/sample.yaml"),
+                                 fromResource("/com/mmdemirbas/log4j2/configconverter/sample.yaml"),
                                  Config(status = Level.warn,
                                         name = "YAMLConfigTest",
                                         properties = mutableListOf(Property(name = "filename",

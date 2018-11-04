@@ -36,7 +36,7 @@ fun Map<String, Any>.toConfig(): Config {
                   dest = map.string("dest"),
                   monitorIntervalSeconds = map.int("monitorInterval"),
                   name = map.string("name"),
-                  packages = map.string("packages")?.split(',')?.mapMutable { it.trim() },
+                  packages = map.string("packages"),
                   schemaResource = map.string("schema"),
                   isShutdownHookEnabled = map.string("shutdownHook")?.equals("disable")?.not(),
                   status = map.enum<Level>("status"),
@@ -224,6 +224,3 @@ private fun Map<String, Any>.toFilter(alias: String): Filter {
                                                        "onMismatch",
                                                        "onMatch")))
 }
-
-private fun notImplementedFor(any: Any?): Nothing =
-        TODO("type: ${any?.javaClass?.name}  toString: $any")

@@ -11,17 +11,17 @@ import java.util.*
 
 fun Map<String, Any>?.long(key: String) = this?.get(key)?.let {
     when (it) {
-        is Long   -> it
+        is Number -> it.toLong()
         is String -> it.toLong()
-        else      -> TODO()
+        else      -> notImplementedFor(it)
     }
 }
 
 fun Map<String, Any>?.int(key: String) = this?.get(key)?.let {
     when (it) {
-        is Int    -> it
+        is Number -> it.toInt()
         is String -> it.toInt()
-        else      -> TODO()
+        else      -> notImplementedFor(it)
     }
 }
 
@@ -29,7 +29,7 @@ fun Map<String, Any>?.bool(key: String) = this?.get(key)?.let {
     when (it) {
         is Boolean -> it
         is String  -> it.toBoolean()
-        else       -> TODO()
+        else       -> notImplementedFor(it)
     }
 }
 
@@ -104,3 +104,5 @@ inline fun <T, R> Iterable<T>.mapMutable(transform: (T) -> R) =
 private fun <K, V> Map<K, V>?.toMutableMapOrNull() =
         if (this?.isEmpty() == false) toMutableMap() else null
 
+fun notImplementedFor(any: Any?): Nothing =
+        TODO("type: ${any?.javaClass?.name}  toString: $any")

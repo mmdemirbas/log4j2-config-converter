@@ -35,7 +35,7 @@ object SnakeYamlSerializer : Serializer(Format.YAML) {
                                                            "dest" to dest,
                                                            "monitorInterval" to monitorIntervalSeconds,
                                                            "name" to name,
-                                                           "packages" to packages?.joinToString(),
+                                                           "packages" to packages,
                                                            "schema" to schemaResource,
                                                            "shutdownHook" to isShutdownHookEnabled,
                                                            "status" to status?.name,

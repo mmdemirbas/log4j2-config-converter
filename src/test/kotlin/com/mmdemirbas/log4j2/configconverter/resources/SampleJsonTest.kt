@@ -17,10 +17,10 @@ import org.junit.jupiter.api.DisplayName
 
 @DisplayName("sample.json")
 object SampleJsonTest : TestBase(JSON,
-                                 readResource("/com/mmdemirbas/log4j2/configconverter/sample.json"),
+                                 fromResource("/com/mmdemirbas/log4j2/configconverter/sample.json"),
                                  Config(status = Level.debug,
                                         name = "RoutingTest",
-                                        packages = mutableListOf("org.apache.logging.log4j.test"),
+                                        packages = "org.apache.logging.log4j.test",
                                         properties = mutableListOf(Property("filename",
                                                                             "target/rolling1/rollingtest-$\${sd:type}.log")),
 

@@ -16,7 +16,7 @@ import org.junit.jupiter.api.DisplayName
 
 @DisplayName("sample.properties")
 object SamplePropertiesTest : TestBase(PROPERTIES,
-                                       readResource("/com/mmdemirbas/log4j2/configconverter/sample.properties"),
+                                       fromResource("/com/mmdemirbas/log4j2/configconverter/sample.properties"),
                                        Config(status = Level.error,
                                               name = "PropertiesConfig",
                                               dest = "err",

@@ -7,5 +7,5 @@ import org.junit.jupiter.api.DisplayName
 
 @DisplayName("prod.properties")
 object ProdPropertiesTest : TestBase(PROPERTIES,
-                                     readResource("/com/mmdemirbas/log4j2/configconverter/prod.properties"),
+                                     fromResource("/com/mmdemirbas/log4j2/configconverter/prod.properties"),
                                      Config())
