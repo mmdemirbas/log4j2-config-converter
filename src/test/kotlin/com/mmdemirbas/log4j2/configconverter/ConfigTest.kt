@@ -71,12 +71,35 @@ class ConfigTest {
 
 
     @Nested
-    inner class properties : TestBase(config = Config(properties = mutableListOf(
-            Property(name = "", value = ""))),
-                                      strings = mapOf(PROPERTIES to setOf("verbose=full\n"),
-                                                      YAML to setOf("Configuration:\n  verbose: full\n"),
+    inner class properties : TestBase(config = Config(properties = mutableListOf(Property(name = "secretOfUniverse", value = "42"))),
+                                      strings = mapOf(PROPERTIES to setOf("property.secretOfUniverse=42\n"),
+                                                      YAML to setOf("""
+                                                        Configuration:
+                                                          properties:
+                                                            property:
+                                                              name: secretOfUniverse
+                                                              value: 42
+
+                                                        """.trimIndent(), """
+                                                        Configuration:
+                                                          properties:
+                                                            property:
+                                                              name: secretOfUniverse
+                                                              value: '42'
+
+                                                        """.trimIndent()),
                                                       XML to setOf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Configuration verbose=\"full\"/>\n"),
-                                                      JSON to setOf("{\n  \"Configuration\" : {\n    \"verbose\" : \"full\"\n  }\n}")))
+                                                      JSON to setOf("""
+                                                        {
+                                                          "Configuration" : {
+                                                            "properties" : {
+                                                              "property" : {
+                                                                "name" : "secretOfUniverse",
+                                                                "value" : "42"
+                                                              }
+                                                            }
+                                                          }
+                                                        }""".trimIndent())))
 
     //    @Nested
     //    inner class scripts : TestBase(strings = mapForProperty("verbose", "full"),

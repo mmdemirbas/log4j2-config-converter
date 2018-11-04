@@ -4,14 +4,16 @@ import com.mmdemirbas.log4j2.configconverter.serializer.JacksonJsonSerializer
 import com.mmdemirbas.log4j2.configconverter.serializer.JacksonYamlSerializer
 import com.mmdemirbas.log4j2.configconverter.serializer.PropertiesSerializer
 import com.mmdemirbas.log4j2.configconverter.serializer.SnakeYamlSerializer
-import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.DynamicContainer
+import org.junit.jupiter.api.DynamicNode
+import org.junit.jupiter.api.DynamicTest
+import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.function.Executable
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.Arguments
-import org.junit.jupiter.params.provider.MethodSource
+import org.junit.platform.commons.util.BlacklistedExceptions
+import org.opentest4j.MultipleFailuresError
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 abstract class TestBase(val config: Config,
@@ -22,83 +24,113 @@ abstract class TestBase(val config: Config,
                 config: Config) : this(config = config,
                                        strings = mapOf(format to string))
 
-    // keep public to make getSerializer method available
-    @Suppress("unused") val serializers =
-            setOf(JacksonJsonSerializer,
-                  JacksonYamlSerializer,
-                  SnakeYamlSerializer,
-                    // todo: XmlSerializer,
-                  PropertiesSerializer).filter { serializer ->
-                serializer.format in strings.keys
-            }.map { serializer ->
-                Arguments.of(serializer.simpleName, serializer)!!
-            }
-
     @DisplayName("serialize")
-    @ParameterizedTest(name = "[{index}] {0}.serialize()")
-    @MethodSource("getSerializers")
-    fun serialize(serializerName: String, serializer: Serializer) {
-        val serialized = config.toString(serializer)
-        val expecteds = strings[serializer.format]!!
-        if (serialized !in expecteds) {
-            assertEquals(expecteds.firstOrNull(), serialized) {
-                when {
-                    expecteds.size == 1 -> serializer.fullName
-                    else                -> serializer.fullName + " (none of the ${expecteds.size} alternative(s) matched)"
+    @TestFactory
+    fun serialize(): List<DynamicTest> {
+        return serializers.map { serializer ->
+            DynamicTest.dynamicTest("${serializer.simpleName}.serialize()") {
+                val serialized = config.toString(serializer)
+                val format = serializer.format
+                val expecteds = strings[format]!!
+                val singleExpected = expecteds.singleOrNull()
+                if (singleExpected != null) {
+                    assertEquals(singleExpected, serialized) {
+                        serializer.fullName
+                    }
+                } else {
+                    assertAny(expecteds.mapIndexed { index, expected ->
+                        Executable {
+                            assertEquals(expected, serialized) {
+                                serializer.fullName + " (${format.name.toLowerCase()}[$index] of ${expecteds.size})"
+                            }
+                        }
+                    })
                 }
             }
         }
     }
 
     @DisplayName("deserialize")
-    @ParameterizedTest(name = "[{index}] {0}.deserialize()")
-    @MethodSource("getSerializers")
-    fun deserialize(serializerName: String, serializer: Serializer) {
-        val expecteds = strings[serializer.format]!!
-        val singleExpected = expecteds.singleOrNull()
-        if (singleExpected != null) {
-            assertEquals(config, singleExpected.toConfig(serializer)) {
-                serializer.fullName
-            }
-        } else {
-            assertAll(expecteds.mapIndexed { index, expected ->
+    @TestFactory
+    fun deserialize(): List<DynamicNode> {
+        return serializers.map { serializer ->
+            val format = serializer.format
+            val executables = strings[format]!!.map { expected ->
                 Executable {
-                    assertEquals(config, expected.toConfig(serializer)) {
-                        serializer.fullName + " (alternative at [$index] among ${expecteds.size} alternative(s))"
-                    }
+                    val deserialized = expected.toConfig(serializer)
+                    assertEquals(config, deserialized) { serializer.fullName }
                 }
-            })
+            }
+            val singleExecutable = executables.singleOrNull()
+            if (singleExecutable != null) {
+                DynamicTest.dynamicTest("${serializer.simpleName}.deserialize()",
+                                        singleExecutable)
+            } else DynamicContainer.dynamicContainer("${serializer.simpleName}.deserialize()",
+                                                     executables.mapIndexed { index, executable ->
+                                                         DynamicTest.dynamicTest(
+                                                                 "${format.name.toLowerCase()}[$index]",
+                                                                 executable)
+                                                     })
         }
     }
 
     @DisplayName("convert")
-    @ParameterizedTest(name = "[{index}] {0}.serialize().deserialize()")
-    @MethodSource("getSerializers")
-    fun convert(serializerName: String, serializer: Serializer) {
-        val serialized = config.toString(serializer)
-        val deserialized = serialized.toConfig(serializer)
-        assertEquals(config, deserialized) {
-            """${serializer.fullName} =>
+    @TestFactory
+    fun convert(): List<DynamicTest> {
+        return serializers.map { serializer ->
+            DynamicTest.dynamicTest("${serializer.simpleName}.serialize().deserialize()") {
+                val serialized = config.toString(serializer)
+                val deserialized = serialized.toConfig(serializer)
+                assertEquals(config, deserialized) {
+                    """${serializer.fullName} =>
 
-===[ $serializerName.serialize() ]===============================================================
+===[ ${serializer.simpleName}.serialize() ]===============================================================
 
 $serialized
 
 
-===[ $serializerName.deserialize() ]=============================================================
+===[ ${serializer.simpleName}.deserialize() ]=============================================================
 
 $deserialized
 
                 """
+                }
+            }
         }
     }
 
-    private val Any.simpleName get() = javaClass.simpleName
-    private val Any.fullName get() = javaClass.name!!
+    private val serializers
+        get() = setOf(JacksonJsonSerializer,
+                      JacksonYamlSerializer,
+                      SnakeYamlSerializer,
+                // todo: XmlSerializer,
+                      PropertiesSerializer).filter { serializer ->
+            serializer.format in strings.keys
+        }
 
     companion object {
 
         fun fromResource(resourceName: String) =
                 setOf(TestBase::class.java.getResource(resourceName).readText())
+
+        fun assertAny(executables: Collection<Executable>) {
+            val failures = mutableListOf<Throwable>()
+            for (executable in executables) {
+                try {
+                    executable.execute()
+                    return
+                } catch (t: Throwable) {
+                    BlacklistedExceptions.rethrowIfBlacklisted(t)
+                    failures.add(t)
+                }
+            }
+
+            if (!failures.isEmpty()) {
+                throw MultipleFailuresError(null, failures)
+            }
+        }
+
+        val Any.simpleName get() = javaClass.simpleName!!
+        val Any.fullName get() = javaClass.name!!
     }
 }
