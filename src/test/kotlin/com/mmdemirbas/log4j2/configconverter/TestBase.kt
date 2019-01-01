@@ -19,6 +19,15 @@ import org.opentest4j.MultipleFailuresError
 abstract class TestBase(val config: Config,
                         val strings: Map<Serializer.Format, Set<String>>) {
 
+    private val serializers =
+            setOf(JacksonJsonSerializer,
+                  JacksonYamlSerializer,
+                  SnakeYamlSerializer,
+                    // todo enable: XmlSerializer,
+                  PropertiesSerializer).filter { serializer ->
+                serializer.format in strings.keys
+            }
+
     constructor(format: Serializer.Format,
                 string: Set<String>,
                 config: Config) : this(config = config,
@@ -32,19 +41,17 @@ abstract class TestBase(val config: Config,
                 val serialized = config.toString(serializer)
                 val format = serializer.format
                 val expecteds = strings[format]!!
-                val singleExpected = expecteds.singleOrNull()
-                if (singleExpected != null) {
-                    assertEquals(singleExpected, serialized) {
-                        serializer.fullName
-                    }
-                } else {
-                    assertAny(expecteds.mapIndexed { index, expected ->
-                        Executable {
-                            assertEquals(expected, serialized) {
-                                serializer.fullName + " (${format.name.toLowerCase()}[$index] of ${expecteds.size})"
-                            }
+                val executables = expecteds.mapIndexed { index, expected ->
+                    Executable {
+                        assertEquals(expected.trimIndent(), serialized.trimIndent()) {
+                            serializer.fullName + " (${format.name.toLowerCase()}[$index] of ${expecteds.size})"
                         }
-                    })
+                    }
+                }
+                val singleExecutable = executables.singleOrNull()
+                when (singleExecutable) {
+                    null -> assertAny(executables)
+                    else -> singleExecutable.execute()
                 }
             }
         }
@@ -57,20 +64,22 @@ abstract class TestBase(val config: Config,
             val format = serializer.format
             val executables = strings[format]!!.map { expected ->
                 Executable {
-                    val deserialized = expected.toConfig(serializer)
+                    val deserialized =
+                            expected.trimIndent().toConfig(serializer)
                     assertEquals(config, deserialized) { serializer.fullName }
                 }
             }
             val singleExecutable = executables.singleOrNull()
-            if (singleExecutable != null) {
-                DynamicTest.dynamicTest("${serializer.simpleName}.deserialize()",
-                                        singleExecutable)
-            } else DynamicContainer.dynamicContainer("${serializer.simpleName}.deserialize()",
-                                                     executables.mapIndexed { index, executable ->
-                                                         DynamicTest.dynamicTest(
-                                                                 "${format.name.toLowerCase()}[$index]",
-                                                                 executable)
-                                                     })
+            when (singleExecutable) {
+                null -> DynamicContainer.dynamicContainer("${serializer.simpleName}.deserialize()",
+                                                          executables.mapIndexed { index, executable ->
+                                                              DynamicTest.dynamicTest(
+                                                                      "${format.name.toLowerCase()}[$index]",
+                                                                      executable)
+                                                          })
+                else -> DynamicTest.dynamicTest("${serializer.simpleName}.deserialize()",
+                                                singleExecutable)
+            }
         }
     }
 
@@ -98,15 +107,6 @@ $deserialized
             }
         }
     }
-
-    private val serializers
-        get() = setOf(JacksonJsonSerializer,
-                      JacksonYamlSerializer,
-                      SnakeYamlSerializer,
-                // todo: XmlSerializer,
-                      PropertiesSerializer).filter { serializer ->
-            serializer.format in strings.keys
-        }
 
     companion object {
 
