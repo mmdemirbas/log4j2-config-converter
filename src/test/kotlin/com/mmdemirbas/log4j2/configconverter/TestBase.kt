@@ -14,6 +14,7 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.function.Executable
 import org.junit.platform.commons.util.BlacklistedExceptions
 import org.opentest4j.MultipleFailuresError
+import java.io.File
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 abstract class TestBase(val config: Config,
@@ -112,6 +113,9 @@ $deserialized
 
         fun fromResource(resourceName: String) =
                 setOf(TestBase::class.java.getResource(resourceName).readText())
+
+        fun fromFile(fileName: String) =
+                setOf(File(fileName).readText())
 
         fun assertAny(executables: Collection<Executable>) {
             val failures = mutableListOf<Throwable>()

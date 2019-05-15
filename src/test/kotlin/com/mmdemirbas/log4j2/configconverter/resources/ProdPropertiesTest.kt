@@ -9,3 +9,11 @@ import org.junit.jupiter.api.DisplayName
 object ProdPropertiesTest : TestBase(PROPERTIES,
                                      fromResource("/com/mmdemirbas/log4j2/configconverter/prod.properties"),
                                      Config())
+
+object ReportingOldPropertiesTest : TestBase(PROPERTIES,
+                                             fromFile("/Users/md/dev/opsgenie/gitlab/opsgenie-reporting/opsgenie-reporting-app-root/web-internal-api/src/main/resources/log4j2-prod.properties"),
+                                             Config())
+
+object ReportingNewPropertiesTest : TestBase(PROPERTIES,
+                                             fromFile("/Users/md/dev/opsgenie/gitlab/opsgenie-reporting/opsgenie-reporting-app-root/web-internal-api/src/main/resources/log4j2-prod.properties"),
+                                             Config())
